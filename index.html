@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Каталог 317 ігрових фільмів за реальними подіями, 2000–2026, рейтинг IMDb 7.4+, без трилерів.">
-<title>Було насправді</title>
+<meta name="description" content="A catalogue of 317 feature films based on real events, 2000–2026, IMDb 7.4+, thrillers kept separate.">
+<title>Movies: based on true story</title>
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}img,svg{max-width:100%}</style>
 </head>
 <body>
@@ -159,7 +159,7 @@ footer li{margin-bottom:6px}
 <header class="top">
   <div class="wrap">
     <div class="eyebrow">Каталог · 2000 — серпень 2026</div>
-    <h1>Було насправді</h1>
+    <h1>Movies: based on true story</h1>
     <p class="lede"><b>317 ігрових фільмів за реальними подіями</b> з рейтингом IMDb 7.4 і вище. Позначайте переглянуте й ставте свої оцінки — вони зберігаються у вашому браузері. Кнопка «Ще не бачив» ховає переглянуте, щоб не гортати список двічі, а «Експорт» переносить позначки на інший пристрій.</p>
     <div class="criteria">
       <span class="crit">IMDb ≥ 7.4</span>
@@ -517,7 +517,7 @@ function exportPayload(){
       country:f.country,theme:f.theme,genres:f.genres,basis:f.basis,
       watched:!!k.w,with_sofiyka:!!k.n,my_rating:k.r||null,marked_at:k.ts?new Date(k.ts).toISOString():null};
   }).sort((a,b)=>(b.my_rating||0)-(a.my_rating||0));
-  return {source:'Було насправді — каталог фільмів за реальними подіями',exported_at:new Date().toISOString(),
+  return {source:'Movies: based on true story — catalogue of films based on real events',exported_at:new Date().toISOString(),
     catalogue_size:DATA.length,marked:rows.length,
     watched:rows.filter(r=>r.watched).length,with_sofiyka:rows.filter(r=>r.with_sofiyka).length,films:rows};
 }

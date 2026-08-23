@@ -1,61 +1,67 @@
-# Було насправді — каталог фільмів за реальними подіями
+# Movies: based on true story
 
-Статичний сайт: **317 ігрових фільмів 2000–2026 років, знятих за реальними подіями**, з рейтингом IMDb 7.4 і вище та щонайменше 5 000 голосів. Трилери й горори винесені окремо, документальні фільми, серіали й телефільми не включені.
+A static site: **317 feature films from 2000–2026 based on real events**, rated 7.4 or higher on IMDb with at least 5,000 votes. Thrillers and horror are kept behind a separate toggle; documentaries, series and TV movies are excluded.
 
-Одна сторінка без збірки, без залежностей, без бекенду. Усі дані вшиті в `index.html` — файл відкривається навіть подвійним кліком з диска.
+One page, no build step, no dependencies, no backend. All data is embedded in `index.html` — the file opens by double-clicking it from disk.
 
-## Що всередині
+> The interface and film notes are in Ukrainian. Only the title and this README are in English.
 
-| Файл | Що це |
+## What's inside
+
+| File | What it is |
 |---|---|
-| `index.html` | сам сайт: каталог, фільтри, пошук, позначки, експорт |
-| `data/films.json` | ті самі 317 фільмів у JSON — для будь-якого свого використання |
-| `data/films.csv` | те саме таблицею (UTF-8 BOM, відкривається в Excel і Numbers) |
-| `.github/workflows/deploy.yml` | автоматичний деплой на GitHub Pages при пуші в `main` |
-| `.nojekyll` | вимикає обробку Jekyll — інакше Pages ігнорує файли й теки з підкресленням |
+| `index.html` | the site itself: catalogue, filters, search, personal marks, export |
+| `data/films.json` | the same 317 films as JSON — for any use of your own |
+| `data/films.csv` | the same as a table (UTF-8 with BOM, opens in Excel and Numbers) |
+| `.github/workflows/deploy.yml` | automatic deploy to GitHub Pages on every push to `main` |
+| `.nojekyll` | disables Jekyll processing — otherwise Pages ignores files and folders starting with an underscore |
 
-## Розгорнути на GitHub Pages
+## Deploy to GitHub Pages
 
-**Спосіб 1 — через дію (вже налаштований).** Створіть репозиторій, запуште вміст цієї теки в гілку `main`, тоді відкрийте **Settings → Pages** і в полі *Source* виберіть **GitHub Actions**. Наступний пуш опублікує сайт; адреса з'явиться в тому ж розділі й у логах дії.
+**Option 1 — via the workflow (already set up).** Create a repository, push the contents of this folder to `main`, then open **Settings → Pages** and set *Source* to **GitHub Actions**. The next push publishes the site; the address appears in that same section and in the workflow logs.
 
 ```bash
 git init
 git add .
-git commit -m "Каталог фільмів за реальними подіями"
+git commit -m "Films based on real events"
 git branch -M main
 git remote add origin git@github.com:USER/REPO.git
 git push -u origin main
 ```
 
-**Спосіб 2 — без дій, прямо з гілки.** Якщо не хочете вмикати Actions: **Settings → Pages → Source: Deploy from a branch**, гілка `main`, тека `/ (root)`. Файл `.github/workflows/deploy.yml` можна видалити.
+One caveat: if you enable Pages *after* the first push, that first run fails with `Get Pages site failed` — the workflow started before Pages existed. Just re-run it, or push again.
 
-Обидва способи дають адресу вигляду `https://USER.github.io/REPO/`. Перша публікація займає одну-дві хвилини.
+**Option 2 — no Actions, straight from the branch.** If you'd rather not enable Actions: **Settings → Pages → Source: Deploy from a branch**, branch `main`, folder `/ (root)`. You can then delete `.github/workflows/deploy.yml`.
 
-## Запустити локально
+Both options give you an address like `https://USER.github.io/REPO/`. The first publish takes a minute or two.
 
-Просто відкрийте `index.html` у браузері — дані вшиті в сторінку, сервер не потрібен.
+## Run locally
 
-Якщо хочеться «як на проді»:
+Just open `index.html` in a browser — the data is baked into the page, no server needed.
+
+If you want it "like production":
 
 ```bash
 python3 -m http.server 8000
-# далі http://localhost:8000
+# then http://localhost:8000
 ```
 
-## Позначки й перенесення
+## Marks and moving them between devices
 
-Галочки «дивився» / «з Софійкою» та оцінки 1–5 зберігаються в `localStorage` браузера. Бекенду немає, тож між людьми й пристроями вони не синхронізуються самі — переносяться вручну:
+The "watched" checkboxes, the shared-viewing flag and the 1–5 ratings live in the browser's `localStorage`. There is no backend, so they don't sync between people or devices on their own — you move them by hand:
 
-1. **Експорт** → **Копіювати JSON** на першому пристрої
-2. **Експорт** → вставити текст у поле → **Імпортувати з поля нижче** на другому
+1. **Export** → **Copy JSON** on the first device
+2. **Export** → paste the text into the field → **Import** on the second
 
-Імпорт зливає позначки, а не затирає їх: там, де стан різний, виграє новіша за часом. Формат експорту простий і придатний для подальшого аналізу — кожен фільм із метаданими, галочками, оцінкою і часом позначки.
+Import *merges* marks rather than overwriting them: where the two states differ, the more recent one wins. The export format is plain and fit for further analysis — every film with its metadata, flags, rating and the timestamp of the mark.
 
-## Оновити каталог
+Because storage is per-browser and per-origin, two people using the same published URL on different machines still keep entirely separate marks. Nothing you tick is visible to anyone else.
 
-Дані вшиті в `index.html` як масив `DATA` (шукайте `const DATA = [` на початку блоку `<script>`). Той самий масив лежить у `data/films.json` у полі `films`. Щоб змінити дані, правте обидва місця або згенеруйте `index.html` заново зі свого джерела.
+## Update the catalogue
 
-Поля запису:
+The data is embedded in `index.html` as a `DATA` array (search for `const DATA = [` near the top of the `<script>` block). The same array sits in `data/films.json` under the `films` key. To change the data, edit both places or regenerate `index.html` from your own source.
+
+Record fields:
 
 ```
 imdb_id, title, title_uk, year, rating, votes, genres[], country,
@@ -63,18 +69,18 @@ country_main, region, language, theme, who_what, basis, note,
 thriller_flag, decade, desc
 ```
 
-`basis` — «реальна історія» або «натхненний реальними подіями»; `note` — застереження про історичну достовірність, показується червоним; `thriller_flag` ховає фільм за кнопку «+ трилери».
+`basis` is either "real story" or "inspired by real events"; `note` is a caveat about historical accuracy, shown in red; `thriller_flag` hides the film behind the "+ thrillers" button.
 
-## Як зібрано список
+## How the list was assembled
 
-Кандидатів шукали за десятиліттями й регіонами: переліки біографічних та історичних фільмів, вікі-списки «films based on actual events» за кожен рік, окремий прочіс азійського кіно. Рейтинг, кількість голосів, рік і тип титру для кожного фільму перевірені запитом до рейтингового API IMDb — не з пошукових сніпетів, які часто застарілі.
+Candidates were gathered by decade and by region: lists of biographical and historical films, per-year wiki lists of "films based on actual events", and a separate sweep of Asian cinema. The rating, vote count, year and title type of every film were verified against IMDb's rating API — not taken from search snippets, which are often stale.
 
-Дані станом на **23 серпня 2026**.
+Data as of **23 August 2026**.
 
-Не потрапили: документальні фільми, серіали, телефільми та записи вистав; художня вигадка на тлі реальних подій («1917», «На Західному фронті без змін», «Кривавий діамант», «RRR»); фільми з менш ніж 5 000 голосів; усе, що вийшло до 2000 року.
+Excluded: documentaries, series, TV movies and recorded stage productions; fiction set against a real backdrop ("1917", "All Quiet on the Western Front", "Blood Diamond", "RRR"); films with fewer than 5,000 votes; anything released before 2000.
 
-Індія дає 81 позицію з 317 — це не перекіс вибірки, а наслідок того, що індійські глядачі системно ставлять вищі оцінки, тож поріг 7.4 там долає більше фільмів. Фільтр за регіоном це розрулює.
+India accounts for 81 of the 317 entries. That isn't sampling bias — Indian audiences rate systematically higher, so more Indian films clear the 7.4 threshold. The region filter sorts this out.
 
-## Ліцензія
+## License
 
-Код сторінки — робіть із ним що завгодно. Метадані фільмів (назви, роки, рейтинги) належать IMDb і використані для особистого некомерційного каталогу; описи написані для цього проєкту.
+Do whatever you like with the page's code. The film metadata (titles, years, ratings) belongs to IMDb and is used here for a personal, non-commercial catalogue; the descriptions were written for this project.
