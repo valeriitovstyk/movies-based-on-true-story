@@ -148,6 +148,60 @@ footer p{margin:0 0 10px;max-width:62ch}
 footer ul{margin:0;padding-left:18px}
 footer li{margin-bottom:6px}
 
+/* ---------- users ---------- */
+:root{
+  --u-ira:#0F766E;     --u-ira-on:#FFFFFF;
+  --u-olena:#6D28D9;   --u-olena-on:#FFFFFF;
+  --u-alex:#1D4ED8;    --u-alex-on:#FFFFFF;
+  --u-laverka:#BE123C; --u-laverka-on:#FFFFFF;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --u-ira:#5EEAD4;     --u-ira-on:#0C211E;
+    --u-olena:#C4B5FD;   --u-olena-on:#1C1533;
+    --u-alex:#93C5FD;    --u-alex-on:#0F1D33;
+    --u-laverka:#FDA4AF; --u-laverka-on:#33121B;
+  }
+}
+:root[data-theme="dark"]{
+  --u-ira:#5EEAD4;     --u-ira-on:#0C211E;
+  --u-olena:#C4B5FD;   --u-olena-on:#1C1533;
+  --u-alex:#93C5FD;    --u-alex-on:#0F1D33;
+  --u-laverka:#FDA4AF; --u-laverka-on:#33121B;
+}
+.ava{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:50%;
+  background:var(--uc);color:var(--uc-on);font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  line-height:1;flex:none;text-transform:uppercase}
+.ava.lg{width:28px;height:28px;font-size:13px}
+.ava.off{background:transparent;color:var(--ink-3);border:1.5px dashed var(--line)}
+
+.userbar{display:flex;align-items:center;gap:9px;margin-top:22px;flex-wrap:wrap}
+.userbar .cur{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--uc);background:var(--surface);
+  border-radius:99px;padding:4px 14px 4px 4px}
+.userbar .cur .nm{font-weight:600;font-size:14px;color:var(--uc)}
+.userbar .hint{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3)}
+
+.who{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.who .lbl{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);margin-right:2px}
+.wu{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;
+  padding:2px 9px 2px 2px;background:var(--surface);font-size:12px;color:var(--ink-3)}
+.wu .ava{opacity:.35;filter:grayscale(1)}
+.wu.on{border-color:var(--uc);color:var(--uc);background:var(--surface)}
+.wu.on .ava{opacity:1;filter:none}
+.wu.me{outline:1px solid var(--uc);outline-offset:1px}
+.wu .rt{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:600}
+.wu .tg{font-family:"IBM Plex Mono",monospace;font-size:10px;opacity:.8}
+
+.score .grp{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);margin-top:4px}
+.stat.grp .n{color:var(--accent)}
+
+.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.pickb{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);
+  border-radius:3px;padding:11px 13px;cursor:pointer;text-align:left}
+.pickb:hover{border-color:var(--uc);background:var(--surface-2)}
+.pickb .nm{font-weight:600;color:var(--uc)}
+
 @media (max-width:640px){
   header.top{padding:34px 0 20px}
   li.film{grid-template-columns:50px 1fr;gap:12px}
@@ -160,7 +214,7 @@ footer li{margin-bottom:6px}
   <div class="wrap">
     <div class="eyebrow">Каталог · 2000 — серпень 2026</div>
     <h1>Movies: based on true story</h1>
-    <p class="lede"><b>317 ігрових фільмів за реальними подіями</b> з рейтингом IMDb 7.4 і вище. Позначайте переглянуте й ставте свої оцінки — вони зберігаються у вашому браузері. Кнопка «Ще не бачив» ховає переглянуте, щоб не гортати список двічі, а «Експорт» переносить позначки на інший пристрій.</p>
+    <p class="lede"><b>317 ігрових фільмів за реальними подіями</b> з рейтингом IMDb 7.4 і вище. Кожен позначає переглянуте й ставить свої оцінки під власним акаунтом — у картці видно, хто що вже бачив. Кнопка «Ще не переглянуто» ховає ваше переглянуте, «Ніхто з нас» показує фільми, яких не бачив ніхто з групи.</p>
     <div class="criteria">
       <span class="crit">IMDb ≥ 7.4</span>
       <span class="crit">голосів ≥ 5 000</span>
@@ -168,6 +222,7 @@ footer li{margin-bottom:6px}
       <span class="crit">повний метр, не документальний</span>
       <span class="crit">без трилерів</span>
     </div>
+    <div class="userbar" id="userbar"></div>
     <div class="stats" id="stats"></div>
     <div class="banner hide" id="banner"></div>
   </div>
@@ -183,13 +238,14 @@ footer li{margin-bottom:6px}
       <select id="sort" aria-label="Сортування">
         <option value="rating">За рейтингом IMDb ↓</option>
         <option value="mine">За моєю оцінкою ↓</option>
+        <option value="group">За оцінкою групи ↓</option>
         <option value="year_desc">Спочатку новіші</option>
         <option value="year_asc">Спочатку старіші</option>
         <option value="votes">За популярністю ↓</option>
         <option value="az">За назвою А–Я</option>
       </select>
       <select id="region" aria-label="Регіон"><option value="">Усі регіони</option></select>
-      <button class="btn" id="unseenBtn" type="button">Ще не бачив</button>
+      <button class="btn" id="unseenBtn" type="button">Ще не переглянуто</button>
       <button class="btn" id="thr" type="button">+ трилери</button>
       <button class="btn" id="rand" type="button">Випадковий</button>
       <button class="btn" id="exp" type="button">Експорт</button>
@@ -207,6 +263,12 @@ footer li{margin-bottom:6px}
   </div>
   <ol class="list" id="list"></ol>
 </main>
+
+<dialog id="userdlg"><div class="dlg">
+  <h3>Хто дивиться?</h3>
+  <p id="userinfo">Позначки й оцінки зберігаються окремо для кожного акаунта. Змінити вибір можна будь-коли — кнопкою біля імені.</p>
+  <div class="pick" id="pick"></div>
+</div></dialog>
 
 <dialog id="expdlg"><div class="dlg">
   <h3>Експорт позначок</h3>
@@ -240,7 +302,8 @@ footer li{margin-bottom:6px}
       <div>
         <h2>Позначки</h2>
         <ul>
-          <li>Галочки й оцінки живуть у вашому браузері (localStorage). Щоб перенести їх — «Експорт» → «Копіювати JSON», а на іншому пристрої вставити в те саме поле й натиснути «Імпортувати».</li>
+          <li>У кожного акаунта свої позначки й оцінки. У картці фільму видно всю групу: хто переглянув і з якою оцінкою.</li>
+          <li>Поки що все зберігається в цьому браузері (localStorage) — спільної бази ще немає, тож між пристроями стан переноситься через «Експорт» → «Копіювати JSON» → «Імпортувати».</li>
           <li><span class="tag loose">вільна інтерпретація</span> — реальна основа є, але з великими художніми вольностями.</li>
           <li><span class="tag thr">тег: трилер</span> — показуються кнопкою «+ трилери».</li>
           <li>Червона примітка — застереження про історичну достовірність.</li>
@@ -275,12 +338,50 @@ function mergeMarks(){
   }
   return out;
 }
-let MARKS = mergeMarks(INITIAL_MARKS, readLocal('bn_marks',{}));
+/* ---------- accounts ---------- */
+const USERS=[
+  {id:'ira',     name:'ira',     v:'--u-ira'},
+  {id:'olena',   name:'olena',   v:'--u-olena'},
+  {id:'alex',    name:'alex',    v:'--u-alex'},
+  {id:'laverka', name:'laverka', v:'--u-laverka'}
+];
+const USER_BY_ID=Object.fromEntries(USERS.map(u=>[u.id,u]));
+const ustyle=u=>`--uc:var(${u.v});--uc-on:var(${u.v}-on)`;
+const avatar=(u,cls)=>`<span class="ava ${cls||''}" style="${ustyle(u)}" aria-hidden="true">${u.name[0]}</span>`;
+
+/* ---------- backend ----------
+   A localStorage stub exposing the interface Supabase will implement.
+   Switching to the real database means replacing BE — nothing else moves.
+   Every method is async precisely because over Supabase it becomes a network call. */
+const LocalBackend={
+  kind:'local',
+  async currentUser(){return readLocal('bn_user',null);},
+  async signIn(id){writeLocal('bn_user',id);return id;},
+  async loadAll(){return readLocal('bn_all',{});},
+  async setMark(userId,imdbId,mark){
+    const all=readLocal('bn_all',{});
+    (all[userId]=all[userId]||{})[imdbId]=mark;
+    writeLocal('bn_all',all);
+    return mark;
+  },
+  async putMany(userId,marks){
+    const all=readLocal('bn_all',{});
+    all[userId]=mergeMarks(all[userId]||{},marks);
+    writeLocal('bn_all',all);
+    return all[userId];
+  }
+};
+let BE=LocalBackend;
+
+let ALL={};      // {userId:{imdbId:{w,n,r,ts}}} — позначки всіх
+let ME=null;     // id поточного акаунта
 let READONLY=false;
+const myMarks=()=>(ME&&ALL[ME])||{};
 
 const S={q:'',sort:'rating',region:'',thr:false,decades:new Set(),themes:new Set(),mine:''};
 const saved=readLocal('bn_state',null);
 if(saved){S.sort=saved.sort||S.sort;S.region=saved.region||'';S.thr=!!saved.thr;S.mine=saved.mine||'';
+  if(S.mine==='nathan')S.mine='together';
   S.decades=new Set(saved.decades||[]);S.themes=new Set(saved.themes||[]);}
 function saveState(){writeLocal('bn_state',{sort:S.sort,region:S.region,thr:S.thr,mine:S.mine,decades:[...S.decades],themes:[...S.themes]});}
 
@@ -293,7 +394,6 @@ function setStatus(kind){
   else s.textContent='позначки зберігаються локально';
 }
 function queueSave(){
-  writeLocal('bn_marks',MARKS);
   setStatus('saved');
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>setStatus(''),2200);
@@ -307,37 +407,44 @@ function importMarks(text){
   else if(j&&Array.isArray(j.films)){
     for(const f of j.films){
       if(!f||!f.imdb_id)continue;
-      incoming[f.imdb_id]={w:f.watched?1:0,n:(f.with_sofiyka||f.with_nathan)?1:0,
+      incoming[f.imdb_id]={w:f.watched?1:0,n:(f.together||f.with_sofiyka||f.with_nathan)?1:0,
         r:f.my_rating||0,ts:f.marked_at?(Date.parse(f.marked_at)||Date.now()):Date.now()};
     }
   }else if(mergeCheck(j)){incoming=j;}
   const n=Object.keys(incoming).length;
   if(!n)return 'У файлі не знайшлося жодної позначки.';
-  MARKS=mergeMarks(MARKS,incoming);
-  writeLocal('bn_marks',MARKS);
+  if(!ME)return 'Спершу оберіть акаунт — імпорт іде в позначки конкретної людини.';
+  ALL[ME]=mergeMarks(myMarks(),incoming);
+  BE.putMany(ME,incoming);
   render();setStatus('imported');
-  return 'Імпортовано позначок: '+n+'. Де є конфлікт — виграє новіша за часом.';
+  return 'Імпортовано позначок: '+n+' в акаунт «'+USER_BY_ID[ME].name+'». Де є конфлікт — виграє новіша за часом.';
 }
 function showBanner(t){const b=el('banner');b.textContent=t;b.classList.remove('hide');}
 
 /* ---------- marks ---------- */
-function m(id){return MARKS[id]||{w:0,n:0,r:0,ts:0};}
+function m(id){return myMarks()[id]||{w:0,n:0,r:0,ts:0};}
+function marksOf(uid,id){return (ALL[uid]&&ALL[uid][id])||{w:0,n:0,r:0,ts:0};}
+function groupSeen(id){return USERS.filter(u=>marksOf(u.id,id).w).length;}
+function groupAvg(id){
+  const rs=USERS.map(u=>marksOf(u.id,id).r).filter(Boolean);
+  return rs.length?rs.reduce((a,b)=>a+b,0)/rs.length:0;
+}
 function setMark(id,patch){
+  if(!ME)return;
   const cur=m(id);
   const next={w:cur.w?1:0,n:cur.n?1:0,r:cur.r||0,ts:Date.now()};
   Object.assign(next,patch);
   next.ts=Date.now();
   if(next.n&&!next.w)next.w=1;
-  MARKS[id]=next;
-  writeLocal('bn_marks',MARKS);
-  queueSave();
+  (ALL[ME]=ALL[ME]||{})[id]=next;
+  BE.setMark(ME,id,next).then(queueSave).catch(()=>setStatus(''));
 }
 
 /* ---------- facets ---------- */
 const THEMES=[...new Set(DATA.map(f=>f.theme))].map(t=>({t,n:DATA.filter(f=>f.theme===t).length})).sort((a,b)=>b.n-a.n);
 const REGIONS=[...new Set(DATA.map(f=>f.region))].map(r=>({r,n:DATA.filter(f=>f.region===r).length})).sort((a,b)=>b.n-a.n);
 const DECADES=['2000-ті','2010-ті','2020-ті'];
-const MINE=[['unseen','ще не бачив'],['seen','переглянуті'],['nathan','з Софійкою'],['rated','з моєю оцінкою'],['top','мої 4–5']];
+const MINE=[['unseen','ще не переглянуто'],['seen','переглянуті'],['together','разом'],['rated','з моєю оцінкою'],['top','мої 4–5'],['nobody','ніхто з нас']];
 
 el('decades').innerHTML=DECADES.map(d=>`<button class="chip" data-dec="${d}" type="button">${d}<span class="c">${DATA.filter(f=>f.decade===d).length}</span></button>`).join('');
 el('themes').innerHTML=THEMES.map(o=>`<button class="chip" data-theme="${o.t}" type="button">${o.t}<span class="c">${o.n}</span></button>`).join('');
@@ -351,9 +458,10 @@ function mineOk(f,mode){
   const mk=m(f.imdb_id);
   if(mode==='seen')return !!mk.w;
   if(mode==='unseen')return !mk.w;
-  if(mode==='nathan')return !!mk.n;
+  if(mode==='together')return !!mk.n;
   if(mode==='rated')return !!mk.r;
   if(mode==='top')return mk.r>=4;
+  if(mode==='nobody')return groupSeen(f.imdb_id)===0;
   return true;
 }
 function matches(f){
@@ -374,6 +482,7 @@ function current(){
   const cmp={
     rating:(a,b)=>b.rating-a.rating||b.votes-a.votes,
     mine:(a,b)=>(m(b.imdb_id).r||0)-(m(a.imdb_id).r||0)||b.rating-a.rating,
+    group:(a,b)=>groupAvg(b.imdb_id)-groupAvg(a.imdb_id)||b.rating-a.rating,
     year_desc:(a,b)=>b.year-a.year||b.rating-a.rating,
     year_asc:(a,b)=>a.year-b.year||b.rating-a.rating,
     votes:(a,b)=>b.votes-a.votes,
@@ -382,8 +491,19 @@ function current(){
   return r.sort(cmp);
 }
 
+function whoRow(f){
+  return '<div class="who"><span class="lbl">у групі</span>'+USERS.map(u=>{
+    const k=marksOf(u.id,f.imdb_id), on=!!(k.w||k.r);
+    const title=esc(u.name)+' — '+(k.w?'переглянуто':'ще ні')+(k.r?', оцінка '+k.r+'/5':'')+(k.n?', разом':'');
+    return `<span class="wu${on?' on':''}${u.id===ME?' me':''}" style="${ustyle(u)}" title="${title}">`
+      +avatar(u)+`<span class="nm">${esc(u.name)}</span>`
+      +(k.r?`<span class="rt">${k.r}</span>`:'')+(k.n?'<span class="tg">разом</span>':'')+'</span>';
+  }).join('')+'</div>';
+}
+
 function row(f){
   const mk=m(f.imdb_id),loose=f.basis!=='реальна історія',dis=READONLY?' disabled':'';
+  const ga=groupAvg(f.imdb_id);
   let stars='';
   for(let i=1;i<=5;i++)stars+=`<button class="star${mk.r>=i?' on':''}" data-star="${i}" data-id="${f.imdb_id}" type="button" title="${i} з 5" aria-label="Оцінка ${i} з 5"${dis}>${STAR}</button>`;
   return `<li class="film${mk.w?' seen':''}" id="f_${f.imdb_id}">
@@ -391,6 +511,7 @@ function row(f){
       <div class="r ${f.rating>=8?'high':''}">${f.rating.toFixed(1)}</div>
       <div class="v">${(f.votes/1000).toFixed(f.votes<100000?1:0)}k</div>
       ${mk.r?`<div class="mine">моя ${mk.r}/5</div>`:''}
+      ${ga?`<div class="grp">гурт ${ga.toFixed(1)}</div>`:''}
     </div>
     <div>
       <div class="title-line">
@@ -407,11 +528,12 @@ function row(f){
       </div>
       ${f.note?`<div class="note">${esc(f.note)}</div>`:''}
       <div class="marks">
-        <button class="mk${mk.w?' on':''}" data-w="${f.imdb_id}" type="button"${dis}><span class="bx"></span>дивився</button>
-        <button class="mk${mk.n?' on':''}" data-n="${f.imdb_id}" type="button"${dis}><span class="bx"></span>з Софійкою</button>
-        <span class="mylabel">оцінка</span>
+        <button class="mk${mk.w?' on':''}" data-w="${f.imdb_id}" type="button"${dis}><span class="bx"></span>переглянуто</button>
+        <button class="mk${mk.n?' on':''}" data-n="${f.imdb_id}" type="button"${dis}><span class="bx"></span>разом</button>
+        <span class="mylabel">моя оцінка</span>
         <span class="stars">${stars}</span>
       </div>
+      ${whoRow(f)}
     </div>
   </li>`;
 }
@@ -455,18 +577,18 @@ function refreshCounts(){
 }
 
 function renderStats(){
-  const ids=Object.keys(MARKS);
-  const seen=ids.filter(k=>MARKS[k]&&MARKS[k].w).length;
-  const nat=ids.filter(k=>MARKS[k]&&MARKS[k].n).length;
-  const rated=ids.map(k=>MARKS[k]&&MARKS[k].r).filter(Boolean);
+  const mine=myMarks(), ids=Object.keys(mine);
+  const seen=ids.filter(k=>mine[k]&&mine[k].w).length;
+  const rated=ids.map(k=>mine[k]&&mine[k].r).filter(Boolean);
   const myAvg=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length).toFixed(1):'–';
+  const anySeen=DATA.filter(f=>groupSeen(f.imdb_id)>0).length;
   el('stats').innerHTML=[
     [DATA.length,'фільмів у каталозі',''],
     [(DATA.reduce((s,f)=>s+f.rating,0)/DATA.length).toFixed(2),'середній IMDb',''],
     [DATA.filter(f=>f.rating>=8).length,'з рейтингом 8.0+',''],
-    [seen,'переглянуто','mine'],
-    [nat,'з Софійкою','mine'],
-    [myAvg,'моя середня оцінка','mine']
+    [seen,'переглянуто вами','mine'],
+    [myAvg,'ваша середня оцінка','mine'],
+    [anySeen,'бачив хтось із нас','grp']
   ].map(([n,l,c])=>`<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
 }
 
@@ -515,20 +637,21 @@ function exportPayload(){
     const k=m(f.imdb_id);
     return {imdb_id:f.imdb_id,title:f.title,title_uk:f.title_uk,year:f.year,imdb_rating:f.rating,
       country:f.country,theme:f.theme,genres:f.genres,basis:f.basis,
-      watched:!!k.w,with_sofiyka:!!k.n,my_rating:k.r||null,marked_at:k.ts?new Date(k.ts).toISOString():null};
+      watched:!!k.w,together:!!k.n,my_rating:k.r||null,marked_at:k.ts?new Date(k.ts).toISOString():null};
   }).sort((a,b)=>(b.my_rating||0)-(a.my_rating||0));
-  return {source:'Movies: based on true story — catalogue of films based on real events',exported_at:new Date().toISOString(),
+  return {source:'Movies: based on true story — catalogue of films based on real events',
+    user:ME||null,exported_at:new Date().toISOString(),
     catalogue_size:DATA.length,marked:rows.length,
-    watched:rows.filter(r=>r.watched).length,with_sofiyka:rows.filter(r=>r.with_sofiyka).length,films:rows};
+    watched:rows.filter(r=>r.watched).length,together:rows.filter(r=>r.together).length,films:rows};
 }
 function toCsv(p){
-  const head=['imdb_id','title','title_uk','year','imdb_rating','country','theme','watched','with_sofiyka','my_rating','marked_at'];
+  const head=['imdb_id','title','title_uk','year','imdb_rating','country','theme','watched','together','my_rating','marked_at'];
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   return [head.join(',')].concat(p.films.map(f=>head.map(h=>q(f[h])).join(','))).join('\n');
 }
 el('exp').addEventListener('click',()=>{
   const p=exportPayload();
-  el('expinfo').textContent=p.marked?`${p.marked} позначених ${plural(p.marked)}: переглянуто ${p.watched}, з Софійкою ${p.with_sofiyka}. Копіюйте, щоб перенести в іншу копію або надіслати в чат.`:'Поки жодного фільму не позначено — експорт буде порожній.';
+  el('expinfo').textContent=p.marked?`Акаунт «${p.user}»: ${p.marked} позначених ${plural(p.marked)}, з них переглянуто ${p.watched}, разом ${p.together}. Копіюйте, щоб перенести на інший пристрій.`:'У цьому акаунті ще нічого не позначено — експорт буде порожній.';
   el('exptext').value=JSON.stringify(p,null,1);
   el('expdlg').showModal();
 });
@@ -552,9 +675,55 @@ async function copyOut(btn,label,text){
 el('cpJson').addEventListener('click',e=>copyOut(e.currentTarget,'Копіювати JSON',JSON.stringify(exportPayload(),null,1)));
 el('cpCsv').addEventListener('click',e=>copyOut(e.currentTarget,'Копіювати CSV',toCsv(exportPayload())));
 
+/* ---------- account ---------- */
+function renderUserbar(){
+  const u=USER_BY_ID[ME];
+  if(!u){el('userbar').innerHTML='';return;}
+  el('userbar').innerHTML=`<span class="cur" style="${ustyle(u)}">${avatar(u,'lg')}<span class="nm">${esc(u.name)}</span></span>`
+    +`<button class="btn" id="switchUser" type="button">Змінити акаунт</button>`
+    +`<span class="hint">у кожного свої позначки й оцінки</span>`;
+  el('switchUser').addEventListener('click',()=>openPicker(false));
+}
+function openPicker(first){
+  el('userinfo').textContent=first
+    ? 'Позначки й оцінки зберігаються окремо для кожного акаунта. Оберіть свій — змінити можна будь-коли.'
+    : 'Зміна акаунта. Позначки поточного нікуди не зникнуть.';
+  el('pick').innerHTML=USERS.map(u=>
+    `<button class="pickb" data-user="${u.id}" style="${ustyle(u)}" type="button">${avatar(u,'lg')}<span class="nm">${esc(u.name)}</span></button>`
+  ).join('');
+  el('userdlg').showModal();
+}
+el('userdlg').addEventListener('cancel',e=>{if(!ME)e.preventDefault();});
+el('pick').addEventListener('click',async e=>{
+  const b=e.target.closest('[data-user]');if(!b)return;
+  ME=await BE.signIn(b.dataset.user);
+  el('userdlg').close();
+  el('banner').classList.add('hide');
+  const moved=await claimLegacy(ME);
+  renderUserbar();render();setStatus('');
+  if(moved)showBanner(`Перенесено ${moved} ${plural(moved)} зі старих позначок цього браузера в акаунт «${USER_BY_ID[ME].name}».`);
+});
+
+/* One-time migration of marks made before accounts existed. */
+async function claimLegacy(uid){
+  if(readLocal('bn_migrated',null))return 0;
+  const legacy=mergeMarks(INITIAL_MARKS,readLocal('bn_marks',{}));
+  const n=Object.keys(legacy).length;
+  writeLocal('bn_migrated',uid);
+  if(!n)return 0;
+  ALL[uid]=await BE.putMany(uid,legacy);
+  return n;
+}
+
 /* ---------- boot ---------- */
-render();
-setStatus('');
+async function boot(){
+  ALL=await BE.loadAll();
+  ME=await BE.currentUser();
+  if(!ME||!USER_BY_ID[ME]){ME=null;render();openPicker(true);return;}
+  await claimLegacy(ME);
+  renderUserbar();render();setStatus('');
+}
+boot();
 </script>
 
 </body>
