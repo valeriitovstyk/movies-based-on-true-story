@@ -13,6 +13,8 @@ One page, no build step, no dependencies, no backend. All data is embedded in `i
 | `index.html` | the site itself: catalogue, filters, search, personal marks, export |
 | `data/films.json` | the same 317 films as JSON — for any use of your own |
 | `data/films.csv` | the same as a table (UTF-8 with BOM, opens in Excel and Numbers) |
+| `supabase/schema.sql` | database schema, RLS policies and profile trigger — ready to run |
+| `supabase/README.md` | step-by-step Supabase setup |
 | `.github/workflows/deploy.yml` | automatic deploy to GitHub Pages on every push to `main` |
 | `.nojekyll` | disables Jekyll processing — otherwise Pages ignores files and folders starting with an underscore |
 
@@ -46,16 +48,32 @@ python3 -m http.server 8000
 # then http://localhost:8000
 ```
 
-## Marks and moving them between devices
+## Accounts
 
-The "watched" checkboxes, the shared-viewing flag and the 1–5 ratings live in the browser's `localStorage`. There is no backend, so they don't sync between people or devices on their own — you move them by hand:
+Four accounts share the catalogue: **ira**, **olena**, **alex**, **laverka**, each with its own colour. Pick yours on first open; you can switch any time from the header.
+
+Every account keeps its own "watched" flag, "together" flag and 1–5 rating for every film. Each card shows the whole group — who has seen it and how they rated it — plus the group average next to the IMDb score. Two extra filters come with this: *ніхто з нас* (nobody in the group has seen it) for picking something for a movie night, and sorting by the group's rating.
+
+Marks made before accounts existed are migrated into whichever account you pick first, once, with their original timestamps.
+
+## Where the data lives
+
+Right now: `localStorage`, per browser. Storage sits behind a small adapter (`LocalBackend` in `index.html`) whose interface — `currentUser`, `signIn`, `loadAll`, `setMark`, `putMany` — is the one Supabase will implement. Swapping the backend is a one-line change at `let BE=LocalBackend;`; nothing else in the page moves.
+
+See `supabase/README.md` for the setup. The short version of the security model: Supabase's `anon` key is *meant* to be public and shipping it in the page is fine — protection comes from the RLS policies in `schema.sql`, not from hiding the key. The `service_role` key never goes near the browser.
+
+## Moving marks between devices
+
+Until the database is connected, marks don't sync on their own — you move them by hand:
 
 1. **Export** → **Copy JSON** on the first device
 2. **Export** → paste the text into the field → **Import** on the second
 
+Export covers the account you're currently signed in as, and the file records which one, so an import lands where you expect.
+
 Import *merges* marks rather than overwriting them: where the two states differ, the more recent one wins. The export format is plain and fit for further analysis — every film with its metadata, flags, rating and the timestamp of the mark.
 
-Because storage is per-browser and per-origin, two people using the same published URL on different machines still keep entirely separate marks. Nothing you tick is visible to anyone else.
+Because storage is per-browser and per-origin, two people using the same published URL on different machines still keep entirely separate marks until the database is wired up.
 
 ## Update the catalogue
 
