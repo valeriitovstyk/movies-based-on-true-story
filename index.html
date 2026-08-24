@@ -72,7 +72,10 @@ select{background:var(--surface);border:1px solid var(--line);border-radius:3px;
 .btn{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:9px 13px;cursor:pointer;white-space:nowrap}
 .btn:hover{border-color:var(--accent);color:var(--accent)}
 .btn.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.filter-groups{display:grid;gap:8px;margin-top:12px}
+.filter-group{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;align-items:start}
+.filter-label{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 11px;cursor:pointer;color:var(--ink-2)}
 .chip:hover{border-color:var(--ink-3);color:var(--ink)}
 .chip.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:500}
@@ -204,6 +207,8 @@ footer li{margin-bottom:6px}
 
 @media (max-width:640px){
   header.top{padding:34px 0 20px}
+  .filter-group{grid-template-columns:1fr;gap:4px}
+  .filter-label{padding-top:2px}
   li.film{grid-template-columns:50px 1fr;gap:12px}
   .t-uk{font-size:18px}
   .stat{flex:1 1 44%}
@@ -251,9 +256,20 @@ footer li{margin-bottom:6px}
       <button class="btn" id="rand" type="button">Випадковий</button>
       <button class="btn" id="exp" type="button">Експорт</button>
     </div>
-    <div class="chips" id="mine"></div>
-    <div class="chips" id="decades"></div>
-    <div class="chips" id="themes"></div>
+    <div class="filter-groups" aria-label="Категорії фільтрів">
+      <div class="filter-group">
+        <div class="filter-label">Особисті</div>
+        <div class="chips" id="mine"></div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">За роками</div>
+        <div class="chips" id="decades"></div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">За жанрами</div>
+        <div class="chips" id="themes"></div>
+      </div>
+    </div>
   </div>
 </div>
 
