@@ -250,8 +250,6 @@ footer li{margin-bottom:6px}
         <option value="az">За назвою А–Я</option>
       </select>
       <select id="region" aria-label="Регіон"><option value="">Усі регіони</option></select>
-      <button class="btn" id="notIndia" type="button" aria-pressed="false" title="Прибрати всі фільми з Індії">Не Індія</button>
-      <button class="btn" id="unseenBtn" type="button">Ще не переглянуто</button>
       <button class="btn" id="thr" type="button">+ трилери</button>
       <button class="btn" id="rand" type="button">Випадковий</button>
       <button class="btn" id="exp" type="button">Експорт</button>
@@ -465,7 +463,8 @@ const MINE=[['unseen','ще не переглянуто'],['seen','перегл�
 
 el('decades').innerHTML=DECADES.map(d=>`<button class="chip" data-dec="${d}" type="button">${d}<span class="c">${DATA.filter(f=>f.decade===d).length}</span></button>`).join('');
 el('themes').innerHTML=THEMES.map(o=>`<button class="chip" data-theme="${o.t}" type="button">${o.t}<span class="c">${o.n}</span></button>`).join('');
-el('mine').innerHTML=MINE.map(([k,l])=>`<button class="chip mine" data-mine="${k}" type="button">${l}<span class="c" data-cnt="${k}"></span></button>`).join('');
+el('mine').innerHTML='<button class="chip mine" id="notIndia" type="button" aria-pressed="false" title="Прибрати всі фільми з Індії">Не Індія</button>'
+  +MINE.map(([k,l])=>`<button class="chip mine" data-mine="${k}" type="button">${l}<span class="c" data-cnt="${k}"></span></button>`).join('');
 el('region').innerHTML='<option value="">Усі регіони</option>'+REGIONS.map(o=>`<option value="${o.r}">${o.r} · ${o.n}</option>`).join('');
 
 /* ---------- render ---------- */
@@ -565,7 +564,6 @@ function render(){
   el('thr').classList.toggle('on',S.thr);
   el('notIndia').classList.toggle('on',S.notIndia);
   el('notIndia').setAttribute('aria-pressed',String(S.notIndia));
-  el('unseenBtn').classList.toggle('on',S.mine==='unseen');
   document.querySelectorAll('[data-dec]').forEach(b=>b.classList.toggle('on',S.decades.has(b.dataset.dec)));
   document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',S.themes.has(b.dataset.theme)));
   document.querySelectorAll('[data-mine]').forEach(b=>b.classList.toggle('on',S.mine===b.dataset.mine));
@@ -619,7 +617,6 @@ el('sort').addEventListener('change',e=>{S.sort=e.target.value;render();});
 el('region').addEventListener('change',e=>{S.region=e.target.value;render();});
 el('notIndia').addEventListener('click',()=>{S.notIndia=!S.notIndia;render();});
 el('thr').addEventListener('click',()=>{S.thr=!S.thr;render();});
-el('unseenBtn').addEventListener('click',()=>{S.mine=S.mine==='unseen'?'':'unseen';render();window.scrollTo({top:0,behavior:'smooth'});});
 el('reset').addEventListener('click',()=>{S.q='';S.region='';S.notIndia=false;S.thr=false;S.mine='';S.decades.clear();S.themes.clear();render();});
 el('decades').addEventListener('click',e=>{const b=e.target.closest('[data-dec]');if(!b)return;S.decades.has(b.dataset.dec)?S.decades.delete(b.dataset.dec):S.decades.add(b.dataset.dec);render();});
 el('themes').addEventListener('click',e=>{const b=e.target.closest('[data-theme]');if(!b)return;S.themes.has(b.dataset.theme)?S.themes.delete(b.dataset.theme):S.themes.add(b.dataset.theme);render();});
