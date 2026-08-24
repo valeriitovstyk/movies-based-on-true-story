@@ -245,6 +245,7 @@ footer li{margin-bottom:6px}
         <option value="az">За назвою А–Я</option>
       </select>
       <select id="region" aria-label="Регіон"><option value="">Усі регіони</option></select>
+      <button class="btn" id="notIndia" type="button" aria-pressed="false" title="Прибрати всі фільми з Індії">Не Індія</button>
       <button class="btn" id="unseenBtn" type="button">Ще не переглянуто</button>
       <button class="btn" id="thr" type="button">+ трилери</button>
       <button class="btn" id="rand" type="button">Випадковий</button>
@@ -378,12 +379,12 @@ let ME=null;     // id поточного акаунта
 let READONLY=false;
 const myMarks=()=>(ME&&ALL[ME])||{};
 
-const S={q:'',sort:'rating',region:'',thr:false,decades:new Set(),themes:new Set(),mine:''};
+const S={q:'',sort:'rating',region:'',notIndia:false,thr:false,decades:new Set(),themes:new Set(),mine:''};
 const saved=readLocal('bn_state',null);
-if(saved){S.sort=saved.sort||S.sort;S.region=saved.region||'';S.thr=!!saved.thr;S.mine=saved.mine||'';
+if(saved){S.sort=saved.sort||S.sort;S.region=saved.region||'';S.notIndia=!!saved.notIndia;S.thr=!!saved.thr;S.mine=saved.mine||'';
   if(S.mine==='nathan')S.mine='together';
   S.decades=new Set(saved.decades||[]);S.themes=new Set(saved.themes||[]);}
-function saveState(){writeLocal('bn_state',{sort:S.sort,region:S.region,thr:S.thr,mine:S.mine,decades:[...S.decades],themes:[...S.themes]});}
+function saveState(){writeLocal('bn_state',{sort:S.sort,region:S.region,notIndia:S.notIndia,thr:S.thr,mine:S.mine,decades:[...S.decades],themes:[...S.themes]});}
 
 /* ---------- persistence ---------- */
 let saveTimer=null;
@@ -467,6 +468,7 @@ function mineOk(f,mode){
 function matches(f){
   if(!S.thr&&f.thriller_flag)return false;
   if(S.region&&f.region!==S.region)return false;
+  if(S.notIndia&&f.country_main==='Індія')return false;
   if(S.decades.size&&!S.decades.has(f.decade))return false;
   if(S.themes.size&&!S.themes.has(f.theme))return false;
   if(S.mine&&!mineOk(f,S.mine))return false;
@@ -545,6 +547,8 @@ function render(){
   el('countword').textContent=plural(r.length);
   el('avg').textContent=r.length?(r.reduce((s,f)=>s+f.rating,0)/r.length).toFixed(2):'–';
   el('thr').classList.toggle('on',S.thr);
+  el('notIndia').classList.toggle('on',S.notIndia);
+  el('notIndia').setAttribute('aria-pressed',String(S.notIndia));
   el('unseenBtn').classList.toggle('on',S.mine==='unseen');
   document.querySelectorAll('[data-dec]').forEach(b=>b.classList.toggle('on',S.decades.has(b.dataset.dec)));
   document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',S.themes.has(b.dataset.theme)));
@@ -557,6 +561,7 @@ function chipCounts(){
   const scope=DATA.filter(f=>{
     if(!S.thr&&f.thriller_flag)return false;
     if(S.region&&f.region!==S.region)return false;
+    if(S.notIndia&&f.country_main==='Індія')return false;
     if(S.decades.size&&!S.decades.has(f.decade))return false;
     if(S.themes.size&&!S.themes.has(f.theme))return false;
     return true;
@@ -596,9 +601,10 @@ function renderStats(){
 el('q').addEventListener('input',e=>{S.q=e.target.value;render();});
 el('sort').addEventListener('change',e=>{S.sort=e.target.value;render();});
 el('region').addEventListener('change',e=>{S.region=e.target.value;render();});
+el('notIndia').addEventListener('click',()=>{S.notIndia=!S.notIndia;render();});
 el('thr').addEventListener('click',()=>{S.thr=!S.thr;render();});
 el('unseenBtn').addEventListener('click',()=>{S.mine=S.mine==='unseen'?'':'unseen';render();window.scrollTo({top:0,behavior:'smooth'});});
-el('reset').addEventListener('click',()=>{S.q='';S.region='';S.thr=false;S.mine='';S.decades.clear();S.themes.clear();render();});
+el('reset').addEventListener('click',()=>{S.q='';S.region='';S.notIndia=false;S.thr=false;S.mine='';S.decades.clear();S.themes.clear();render();});
 el('decades').addEventListener('click',e=>{const b=e.target.closest('[data-dec]');if(!b)return;S.decades.has(b.dataset.dec)?S.decades.delete(b.dataset.dec):S.decades.add(b.dataset.dec);render();});
 el('themes').addEventListener('click',e=>{const b=e.target.closest('[data-theme]');if(!b)return;S.themes.has(b.dataset.theme)?S.themes.delete(b.dataset.theme):S.themes.add(b.dataset.theme);render();});
 el('mine').addEventListener('click',e=>{const b=e.target.closest('[data-mine]');if(!b)return;S.mine=S.mine===b.dataset.mine?'':b.dataset.mine;render();});
