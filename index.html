@@ -217,6 +217,7 @@ footer li{margin-bottom:6px}
 .login-form.hide,.pick.hide{display:none}
 .login-who{display:flex;align-items:center;gap:10px;margin:4px 0 14px;font-weight:600;color:var(--uc)}
 .login-form label{display:grid;gap:5px;color:var(--ink-2);font-size:13px}
+.login-form label+label{margin-top:10px}
 .login-form input{width:100%;border:1px solid var(--line);border-radius:3px;background:var(--surface-2);padding:10px 11px;outline:none}
 .login-form input:focus{border-color:var(--accent)}
 .login-form .row{margin:12px 0 0}
@@ -301,10 +302,13 @@ footer li{margin-bottom:6px}
 
 <dialog id="userdlg"><div class="dlg">
   <h3>Хто дивиться?</h3>
-  <p id="userinfo">Позначки й оцінки синхронізуються між пристроями через Supabase. Оберіть свій акаунт і введіть пароль.</p>
+  <p id="userinfo">Позначки й оцінки синхронізуються між пристроями через Supabase. Оберіть свій акаунт і введіть email та пароль.</p>
   <div class="pick" id="pick"></div>
   <form class="login-form hide" id="loginForm">
     <div class="login-who" id="loginWho"></div>
+    <label for="loginEmail">Електронна пошта
+      <input id="loginEmail" type="email" autocomplete="username" required>
+    </label>
     <label for="loginPassword">Пароль
       <input id="loginPassword" type="password" autocomplete="current-password" required>
     </label>
@@ -423,15 +427,19 @@ const SupabaseBackend={
     const {data,error}=await SB.auth.getUser();
     if(error||!data.user){this.userId=null;return null;}
     this.userId=data.user.id;
-    const id=(data.user.email||'').split('@')[0].toLowerCase();
+    const {data:profile,error:profileError}=await SB.from('profiles').select('name').eq('id',data.user.id).single();
+    if(profileError)return null;
+    const id=String(profile.name||'').toLowerCase();
     return USER_BY_ID[id]?id:null;
   },
-  async signIn(id,password){
+  async signIn(id,email,password){
     this.ensure();
-    const {data,error}=await SB.auth.signInWithPassword({email:`${id}@movies.local`,password});
+    const {data,error}=await SB.auth.signInWithPassword({email:email.trim(),password});
     if(error)throw new Error(error.message);
     if(!data.user)throw new Error('Supabase не повернув користувача.');
     this.userId=data.user.id;
+    const {error:profileError}=await SB.from('profiles').update({name:id}).eq('id',data.user.id).select('name').single();
+    if(profileError)throw profileError;
     return id;
   },
   async loadAll(){
@@ -808,13 +816,14 @@ function renderUserbar(){
 }
 function openPicker(first){
   el('userinfo').textContent=first
-    ? 'Позначки й оцінки синхронізуються через Supabase. Оберіть свій акаунт і введіть пароль.'
+    ? 'Позначки й оцінки синхронізуються через Supabase. Оберіть свій акаунт і введіть email та пароль.'
     : 'Оберіть інший акаунт. Поточні позначки вже збережені в Supabase.';
   el('pick').innerHTML=USERS.map(u=>
     `<button class="pickb" data-user="${u.id}" style="${ustyle(u)}" type="button">${avatar(u,'lg')}<span class="nm">${esc(u.name)}</span></button>`
   ).join('');
   el('pick').classList.remove('hide');
   el('loginForm').classList.add('hide');
+  el('loginEmail').value='';
   el('loginPassword').value='';
   el('loginError').textContent='';
   LOGIN_ID=null;
@@ -830,19 +839,19 @@ el('pick').addEventListener('click',e=>{
   el('loginWho').innerHTML=avatar(u,'lg')+`<span>${esc(u.name)}</span>`;
   el('pick').classList.add('hide');
   el('loginForm').classList.remove('hide');
-  el('loginPassword').focus();
+  el('loginEmail').focus();
 });
 el('loginBack').addEventListener('click',()=>openPicker(!ME));
 el('loginForm').addEventListener('submit',async e=>{
   e.preventDefault();
   if(!LOGIN_ID)return;
-  const submit=el('loginSubmit'),password=el('loginPassword').value;
+  const submit=el('loginSubmit'),email=el('loginEmail').value,password=el('loginPassword').value;
   submit.disabled=true;submit.textContent='Входимо…';el('loginError').textContent='';
   try{
-    ME=await BE.signIn(LOGIN_ID,password);
+    ME=await BE.signIn(LOGIN_ID,email,password);
     ALL=await BE.loadAll();
     const moved=await migrateLocalMarks(ME);
-    el('loginPassword').value='';
+    el('loginEmail').value='';el('loginPassword').value='';
     el('userdlg').close();
     el('banner').classList.add('hide');
     renderUserbar();render();setStatus('');

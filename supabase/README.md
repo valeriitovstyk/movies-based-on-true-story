@@ -10,10 +10,11 @@ Steps 1, 2 and 5 are done by hand in the Supabase web console.
 
 2. **Schema.** SQL Editor → paste all of `schema.sql` → Run.
 
-3. **Accounts.** Authentication → Users → Add user, four times, with
-   *Auto Confirm User* ticked: `ira@movies.local`, `olena@movies.local`,
-   `alex@movies.local`, `laverka@movies.local`.
-   Hand out the passwords over chat.
+3. **Accounts.** Authentication → Users → Add user, four times, using each
+   person's real email and a private password, with *Auto Confirm User*
+   ticked. On first login the page associates that Supabase user with the
+   selected catalogue profile (`ira`, `olena`, `alex` or `laverka`).
+   Share passwords only through a secure private channel.
 
    We deliberately avoid Supabase's built-in email on the free tier: it is
    rate-limited to a handful of messages an hour and is meant for testing.
