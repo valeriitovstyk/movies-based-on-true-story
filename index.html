@@ -50,7 +50,8 @@ button,select,input{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 header.top{padding:52px 0 26px;border-bottom:1px solid var(--line)}
-.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
+.topline{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:14px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);padding-top:10px}
 h1{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;font-weight:700;font-size:clamp(40px,7vw,68px);line-height:.98;margin:0 0 14px;letter-spacing:-.01em;text-wrap:balance}
 .lede{max-width:62ch;color:var(--ink-2);font-size:17px;margin:0 0 20px}
 .lede b{color:var(--ink);font-weight:600}
@@ -187,11 +188,17 @@ footer li{margin-bottom:6px}
 .ava.lg{width:28px;height:28px;font-size:13px}
 .ava.off{background:transparent;color:var(--ink-3);border:1.5px dashed var(--line)}
 
-.userbar{display:flex;align-items:center;gap:9px;margin-top:22px;flex-wrap:wrap}
+.userbar{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex:1;flex-wrap:wrap}
 .userbar .cur{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--uc);background:var(--surface);
   border-radius:99px;padding:4px 14px 4px 4px}
 .userbar .cur .nm{font-weight:600;font-size:14px;color:var(--uc)}
 .userbar .hint{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3)}
+.login-inline{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap;max-width:620px}
+.login-inline input{width:190px;border:1px solid var(--line);border-radius:3px;background:var(--surface);padding:8px 10px;outline:none;font-size:14px}
+.login-inline input[type="password"]{width:145px}
+.login-inline input:focus{border-color:var(--accent)}
+.login-inline .btn{padding:8px 13px}
+.login-inline .login-error{flex-basis:100%;text-align:right;min-height:0;margin:0;color:var(--warn);font-size:12px}
 
 .who{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
 .who .lbl{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
@@ -208,23 +215,15 @@ footer li{margin-bottom:6px}
 .score .grp{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);margin-top:4px}
 .stat.grp .n{color:var(--accent)}
 
-.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
-.pickb{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);
-  border-radius:3px;padding:11px 13px;cursor:pointer;text-align:left}
-.pickb:hover{border-color:var(--uc);background:var(--surface-2)}
-.pickb .nm{font-weight:600;color:var(--uc)}
-.login-form{margin-top:2px}
-.login-form.hide,.pick.hide{display:none}
-.login-who{display:flex;align-items:center;gap:10px;margin:4px 0 14px;font-weight:600;color:var(--uc)}
-.login-form label{display:grid;gap:5px;color:var(--ink-2);font-size:13px}
-.login-form label+label{margin-top:10px}
-.login-form input{width:100%;border:1px solid var(--line);border-radius:3px;background:var(--surface-2);padding:10px 11px;outline:none}
-.login-form input:focus{border-color:var(--accent)}
-.login-form .row{margin:12px 0 0}
-.login-error{min-height:1.4em;margin-top:8px;color:var(--warn);font-size:13px}
-
 @media (max-width:640px){
   header.top{padding:34px 0 20px}
+  .topline{display:block}
+  .eyebrow{padding:0;margin-bottom:12px}
+  .userbar{justify-content:flex-start}
+  .login-inline{display:grid;grid-template-columns:1fr auto;width:100%;max-width:none}
+  .login-inline input,.login-inline input[type="password"]{width:100%}
+  .login-inline input[type="email"]{grid-column:1/-1}
+  .login-inline .login-error{text-align:left;grid-column:1/-1}
   .filter-group{grid-template-columns:1fr;gap:4px}
   .filter-label{padding-top:2px}
   li.film{grid-template-columns:50px 1fr;gap:12px}
@@ -235,7 +234,10 @@ footer li{margin-bottom:6px}
 
 <header class="top">
   <div class="wrap">
-    <div class="eyebrow">Каталог · 2000 — серпень 2026</div>
+    <div class="topline">
+      <div class="eyebrow">Каталог · 2000 — серпень 2026</div>
+      <div class="userbar" id="userbar"></div>
+    </div>
     <h1>Movies: based on true story</h1>
     <p class="lede"><b>317 ігрових фільмів за реальними подіями</b> з рейтингом IMDb 7.4 і вище. Кожен позначає переглянуте й ставить свої оцінки під власним акаунтом — у картці видно, хто що вже бачив. Кнопка «Ще не переглянуто» ховає ваше переглянуте, «Ніхто з нас» показує фільми, яких не бачив ніхто з групи.</p>
     <div class="criteria">
@@ -245,7 +247,6 @@ footer li{margin-bottom:6px}
       <span class="crit">повний метр, не документальний</span>
       <span class="crit">без трилерів</span>
     </div>
-    <div class="userbar" id="userbar"></div>
     <div class="stats" id="stats"></div>
     <div class="banner hide" id="banner"></div>
   </div>
@@ -299,26 +300,6 @@ footer li{margin-bottom:6px}
   </div>
   <ol class="list" id="list"></ol>
 </main>
-
-<dialog id="userdlg"><div class="dlg">
-  <h3>Хто дивиться?</h3>
-  <p id="userinfo">Позначки й оцінки синхронізуються між пристроями через Supabase. Оберіть свій акаунт і введіть email та пароль.</p>
-  <div class="pick" id="pick"></div>
-  <form class="login-form hide" id="loginForm">
-    <div class="login-who" id="loginWho"></div>
-    <label for="loginEmail">Електронна пошта
-      <input id="loginEmail" type="email" autocomplete="username" required>
-    </label>
-    <label for="loginPassword">Пароль
-      <input id="loginPassword" type="password" autocomplete="current-password" required>
-    </label>
-    <div class="row">
-      <button class="btn" id="loginSubmit" type="submit">Увійти</button>
-      <button class="btn" id="loginBack" type="button">Назад</button>
-    </div>
-    <div class="login-error" id="loginError" role="alert"></div>
-  </form>
-</div></dialog>
 
 <dialog id="expdlg"><div class="dlg">
   <h3>Експорт позначок</h3>
@@ -400,6 +381,17 @@ const USERS=[
 const USER_BY_ID=Object.fromEntries(USERS.map(u=>[u.id,u]));
 const ustyle=u=>`--uc:var(${u.v});--uc-on:var(${u.v}-on)`;
 const avatar=(u,cls)=>`<span class="ava ${cls||''}" style="${ustyle(u)}" aria-hidden="true">${u.name[0]}</span>`;
+const PROFILE_BY_EMAIL_HASH={
+  d0a67de27f21da999bd250e63c796e65a05427b9cec3152a9dda379a6ea2b428:'alex',
+  '567f8457843fa731e3fa7f1d4baa6e5f20ac74880c6f981436b27bb087a092f1':'olena',
+  '9a196a0f227ff33425fd22dfde396f3e944a9b4bd4f7101945a93be376edb133':'ira',
+  '4f3f47557f7a58d74d03cb0c0a8aa42f76857ddfcbb83f1099371c2e2228c320':'laverka'
+};
+async function emailHash(email){
+  const bytes=new TextEncoder().encode(String(email||'').trim().toLowerCase());
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
 
 /* ---------- Supabase backend ---------- */
 const SUPABASE_URL='https://zmzswxhzuzgmclgbqwmo.supabase.co';
@@ -422,25 +414,41 @@ const SupabaseBackend={
   kind:'supabase',
   userId:null,
   ensure(){if(!SB)throw new Error('Не завантажилася бібліотека Supabase. Перевірте інтернет і оновіть сторінку.');},
+  async resolveProfile(user){
+    const {data:profile,error}=await SB.from('profiles').select('name').eq('id',user.id).single();
+    if(error)throw error;
+    const savedId=String(profile.name||'').toLowerCase();
+    if(USER_BY_ID[savedId])return savedId;
+    const id=PROFILE_BY_EMAIL_HASH[await emailHash(user.email)];
+    if(!id)return null;
+    const {error:updateError}=await SB.from('profiles').update({name:id}).eq('id',user.id).select('name').single();
+    if(updateError)throw updateError;
+    return id;
+  },
   async currentUser(){
     this.ensure();
     const {data,error}=await SB.auth.getUser();
     if(error||!data.user){this.userId=null;return null;}
     this.userId=data.user.id;
-    const {data:profile,error:profileError}=await SB.from('profiles').select('name').eq('id',data.user.id).single();
-    if(profileError)return null;
-    const id=String(profile.name||'').toLowerCase();
-    return USER_BY_ID[id]?id:null;
+    const id=await this.resolveProfile(data.user);
+    if(!id){await this.signOut();return null;}
+    return id;
   },
-  async signIn(id,email,password){
+  async signIn(email,password){
     this.ensure();
     const {data,error}=await SB.auth.signInWithPassword({email:email.trim(),password});
     if(error)throw new Error(error.message);
     if(!data.user)throw new Error('Supabase не повернув користувача.');
     this.userId=data.user.id;
-    const {error:profileError}=await SB.from('profiles').update({name:id}).eq('id',data.user.id).select('name').single();
-    if(profileError)throw profileError;
+    const id=await this.resolveProfile(data.user);
+    if(!id){await this.signOut();throw new Error('Цей email не належить до каталогу.');}
     return id;
+  },
+  async signOut(){
+    this.ensure();
+    const {error}=await SB.auth.signOut();
+    if(error)throw error;
+    this.userId=null;
   },
   async loadAll(){
     this.ensure();
@@ -506,6 +514,7 @@ function setStatus(kind){
   if(kind==='saved'){s.textContent='синхронізовано з Supabase ✓';s.className='diag ok';}
   else if(kind==='imported'){s.textContent='імпортовано й синхронізовано ✓';s.className='diag ok';}
   else if(kind==='error'){s.textContent='не вдалося синхронізувати';s.className='diag warn';}
+  else if(!ME){s.textContent='увійдіть, щоб ставити позначки';}
   else s.textContent='дані синхронізуються через Supabase';
 }
 function queueSave(){
@@ -808,64 +817,48 @@ el('cpCsv').addEventListener('click',e=>copyOut(e.currentTarget,'Копіюва�
 /* ---------- account ---------- */
 function renderUserbar(){
   const u=USER_BY_ID[ME];
-  if(!u){el('userbar').innerHTML='';return;}
+  if(!u){
+    el('userbar').innerHTML=`<form class="login-inline" id="loginInline">
+      <input id="loginEmail" type="email" autocomplete="username" aria-label="Електронна пошта" placeholder="Email" required>
+      <input id="loginPassword" type="password" autocomplete="current-password" aria-label="Пароль" placeholder="Пароль" required>
+      <button class="btn" id="loginSubmit" type="submit">Увійти</button>
+      <div class="login-error" id="loginError" role="alert" aria-live="polite"></div>
+    </form>`;
+    el('loginInline').addEventListener('submit',login);
+    return;
+  }
   el('userbar').innerHTML=`<span class="cur" style="${ustyle(u)}">${avatar(u,'lg')}<span class="nm">${esc(u.name)}</span></span>`
-    +`<button class="btn" id="switchUser" type="button">Змінити акаунт</button>`
-    +`<span class="hint">у кожного свої позначки й оцінки</span>`;
-  el('switchUser').addEventListener('click',()=>openPicker(false));
+    +`<button class="btn" id="logout" type="button">Вийти</button>`;
+  el('logout').addEventListener('click',logout);
 }
-function openPicker(first){
-  el('userinfo').textContent=first
-    ? 'Позначки й оцінки синхронізуються через Supabase. Оберіть свій акаунт і введіть email та пароль.'
-    : 'Оберіть інший акаунт. Поточні позначки вже збережені в Supabase.';
-  el('pick').innerHTML=USERS.map(u=>
-    `<button class="pickb" data-user="${u.id}" style="${ustyle(u)}" type="button">${avatar(u,'lg')}<span class="nm">${esc(u.name)}</span></button>`
-  ).join('');
-  el('pick').classList.remove('hide');
-  el('loginForm').classList.add('hide');
-  el('loginEmail').value='';
-  el('loginPassword').value='';
-  el('loginError').textContent='';
-  LOGIN_ID=null;
-  if(!el('userdlg').open)el('userdlg').showModal();
-}
-el('userdlg').addEventListener('cancel',e=>{if(!ME)e.preventDefault();});
-let LOGIN_ID=null;
-el('pick').addEventListener('click',e=>{
-  const b=e.target.closest('[data-user]');if(!b)return;
-  LOGIN_ID=b.dataset.user;
-  const u=USER_BY_ID[LOGIN_ID];
-  el('loginWho').style.cssText=ustyle(u);
-  el('loginWho').innerHTML=avatar(u,'lg')+`<span>${esc(u.name)}</span>`;
-  el('pick').classList.add('hide');
-  el('loginForm').classList.remove('hide');
-  el('loginEmail').focus();
-});
-el('loginBack').addEventListener('click',()=>openPicker(!ME));
-el('loginForm').addEventListener('submit',async e=>{
+async function login(e){
   e.preventDefault();
-  if(!LOGIN_ID)return;
   const submit=el('loginSubmit'),email=el('loginEmail').value,password=el('loginPassword').value;
   submit.disabled=true;submit.textContent='Входимо…';el('loginError').textContent='';
   try{
-    ME=await BE.signIn(LOGIN_ID,email,password);
-    ALL=await BE.loadAll();
+    const userId=await BE.signIn(email,password);
+    const loaded=await BE.loadAll();
+    ME=userId;ALL=loaded;READONLY=false;
     const moved=await migrateLocalMarks(ME);
-    el('loginEmail').value='';el('loginPassword').value='';
-    el('userdlg').close();
     el('banner').classList.add('hide');
     renderUserbar();render();setStatus('');
     if(moved)showBanner(`Перенесено ${moved} ${plural(moved)} з цього браузера в Supabase для акаунта «${USER_BY_ID[ME].name}».`);
   }catch(err){
-    ME=await BE.currentUser().catch(()=>null);
     el('loginError').textContent=/invalid login credentials/i.test(err.message||'')
-      ? 'Неправильний пароль.'
+      ? 'Неправильний email або пароль.'
       : (err.message||'Не вдалося увійти. Спробуйте ще раз.');
     el('loginPassword').select();
   }finally{
-    submit.disabled=false;submit.textContent='Увійти';
+    if(submit.isConnected){submit.disabled=false;submit.textContent='Увійти';}
   }
-});
+}
+async function logout(){
+  const button=el('logout');button.disabled=true;
+  try{await BE.signOut();}
+  catch(err){button.disabled=false;showBanner('Не вдалося завершити сесію: '+(err.message||'помилка Supabase')+'.');return;}
+  ME=null;ALL={};READONLY=true;
+  renderUserbar();render();setStatus('');
+}
 
 /* One-time migration from the localStorage version of the site. */
 async function migrateLocalMarks(uid){
@@ -886,13 +879,17 @@ async function migrateLocalMarks(uid){
 async function boot(){
   try{
     ME=await BE.currentUser();
-    if(!ME||!USER_BY_ID[ME]){ME=null;render();openPicker(true);return;}
+    if(!ME||!USER_BY_ID[ME]){
+      ME=null;ALL={};READONLY=true;
+      renderUserbar();render();setStatus('');return;
+    }
     ALL=await BE.loadAll();
+    READONLY=false;
     const moved=await migrateLocalMarks(ME);
     renderUserbar();render();setStatus('');
     if(moved)showBanner(`Перенесено ${moved} ${plural(moved)} з цього браузера в Supabase для акаунта «${USER_BY_ID[ME].name}».`);
   }catch(err){
-    ME=null;ALL={};render();openPicker(true);
+    ME=null;ALL={};READONLY=true;renderUserbar();render();setStatus('error');
     el('loginError').textContent=err.message||'Не вдалося підключитися до Supabase.';
   }
 }

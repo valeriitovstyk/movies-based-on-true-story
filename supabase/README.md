@@ -12,8 +12,8 @@ Steps 1, 2 and 5 are done by hand in the Supabase web console.
 
 3. **Accounts.** Authentication → Users → Add user, four times, using each
    person's real email and a private password, with *Auto Confirm User*
-   ticked. On first login the page associates that Supabase user with the
-   selected catalogue profile (`ira`, `olena`, `alex` or `laverka`).
+   ticked. On first login the page automatically associates each recognized
+   Supabase user with its catalogue profile (`ira`, `olena`, `alex` or `laverka`).
    Share passwords only through a secure private channel.
 
    We deliberately avoid Supabase's built-in email on the free tier: it is
