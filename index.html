@@ -154,9 +154,14 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .dlg .row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .dlg textarea{width:100%;height:150px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:9px;resize:vertical}
 
-footer{border-top:1px solid var(--line);padding:34px 0 60px;color:var(--ink-2);font-size:14px}
+footer{border-top:1px solid var(--line);padding:18px 0 42px;color:var(--ink-2);font-size:14px}
+.footer-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 11px;border:1px solid var(--line);border-radius:3px;background:var(--surface);color:var(--ink-2);font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;list-style:none}
+.footer-toggle::-webkit-details-marker{display:none}
+.footer-toggle::after{content:"+";font-size:18px;line-height:1;color:var(--accent)}
+.footer-details[open] .footer-toggle{border-color:var(--accent);color:var(--accent)}
+.footer-details[open] .footer-toggle::after{content:"−"}
 footer h2{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px;font-weight:600}
-footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:26px}
+footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:26px;margin-top:26px}
 footer p{margin:0 0 10px;max-width:62ch}
 footer ul{margin:0;padding-left:18px}
 footer li{margin-bottom:6px}
@@ -335,7 +340,9 @@ footer li{margin-bottom:6px}
 
 <footer>
   <div class="wrap">
-    <div class="cols">
+    <details class="footer-details">
+      <summary class="footer-toggle">Деталі</summary>
+      <div class="cols">
       <div>
         <h2>Як зібрано список</h2>
         <p>Кандидатів шукали за десятиліттями й регіонами: переліки біографічних та історичних фільмів, вікі-списки «films based on actual events» за кожен рік, окремий прочіс азійського кіно.</p>
@@ -362,7 +369,8 @@ footer li{margin-bottom:6px}
           <li>Червона примітка — застереження про історичну достовірність.</li>
         </ul>
       </div>
-    </div>
+      </div>
+    </details>
   </div>
 </footer>
 
