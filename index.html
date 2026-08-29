@@ -661,14 +661,14 @@ function row(f){
         ${f.thriller_flag?'<span class="tag thr">тег: трилер</span>':''}
       </div>
       ${f.note?`<div class="note">${esc(f.note)}</div>`:''}
-      <div class="marks">
+      ${ME?`<div class="marks">
         <button class="mk${mk.w?' on':''}" data-w="${f.imdb_id}" type="button"${dis}><span class="bx"></span>переглянуто</button>
         <button class="mk${mk.n?' on':''}" data-n="${f.imdb_id}" type="button"${dis}><span class="bx"></span>разом</button>
         <button class="mk missing${mk.nt?' on':''}" data-nt="${f.imdb_id}" type="button"${dis}><span class="bx"></span>нема перекладу</button>
         <span class="mylabel">моя оцінка</span>
         <span class="stars">${stars}</span>
       </div>
-      ${whoRow(f)}
+      ${whoRow(f)}`:''}
     </div>
   </li>`;
 }
