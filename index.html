@@ -675,13 +675,12 @@ function mineOk(f,mode){
   if(mode==='nobody')return groupSeen(f.imdb_id)===0;
   return true;
 }
-function matches(f){
+function baseMatches(f){
   if(!S.thr&&f.thriller_flag)return false;
   if(S.region&&f.region!==S.region)return false;
   if(S.notIndia&&f.country_main==='Індія')return false;
   if(S.decades.size&&!S.decades.has(f.decade))return false;
   if(S.themes.size&&!S.themes.has(f.theme))return false;
-  if(S.mine&&!mineOk(f,S.mine))return false;
   const q=norm(S.q);
   if(q){
     const hay=norm(f.title+' '+f.title_uk+' '+f.desc+' '+f.country+' '+f.theme+' '+f.language+' '+(f.genres||[]).join(' '));
@@ -689,6 +688,10 @@ function matches(f){
   }
   return true;
 }
+function matches(f){
+  return baseMatches(f)&&(!S.mine||mineOk(f,S.mine));
+}
+const baseScope=()=>DATA.filter(baseMatches);
 function current(){
   const r=DATA.filter(matches);
   const cmp={
@@ -799,14 +802,7 @@ function render(){
 }
 
 function chipCounts(){
-  const scope=DATA.filter(f=>{
-    if(!S.thr&&f.thriller_flag)return false;
-    if(S.region&&f.region!==S.region)return false;
-    if(S.notIndia&&f.country_main==='Індія')return false;
-    if(S.decades.size&&!S.decades.has(f.decade))return false;
-    if(S.themes.size&&!S.themes.has(f.theme))return false;
-    return true;
-  });
+  const scope=baseScope();
   document.querySelectorAll('[data-cnt]').forEach(sp=>{
     sp.textContent=scope.filter(f=>mineOk(f,sp.dataset.cnt)).length;
   });
@@ -823,15 +819,15 @@ function refreshCounts(){
 }
 
 function renderStats(){
-  const mine=myMarks(), ids=Object.keys(mine);
-  const seen=ids.filter(k=>mine[k]&&mine[k].w).length;
-  const rated=ids.map(k=>mine[k]&&mine[k].r).filter(Boolean);
+  const scope=baseScope();
+  const seen=scope.filter(f=>m(f.imdb_id).w).length;
+  const rated=scope.map(f=>m(f.imdb_id).r).filter(Boolean);
   const myAvg=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length).toFixed(1):'–';
-  const anySeen=DATA.filter(f=>groupSeen(f.imdb_id)>0).length;
+  const anySeen=scope.filter(f=>groupSeen(f.imdb_id)>0).length;
   const stats=[
-    [DATA.length,'фільмів у каталозі',''],
-    [(DATA.reduce((s,f)=>s+f.rating,0)/DATA.length).toFixed(2),'середній IMDb',''],
-    [DATA.filter(f=>f.rating>=8).length,'з рейтингом 8.0+','']
+    [scope.length,'фільмів у вибірці',''],
+    [scope.length?(scope.reduce((s,f)=>s+f.rating,0)/scope.length).toFixed(2):'–','середній IMDb',''],
+    [scope.filter(f=>f.rating>=8).length,'з рейтингом 8.0+','']
   ];
   if(ME)stats.push(
     [seen,'переглянуто вами','mine'],
