@@ -26,18 +26,17 @@ Steps 1, 2 and 5 are done by hand in the Supabase web console.
 5. **Restrict redirects.** Authentication → URL Configuration → Redirect URLs:
    `https://valeriitovstyk.github.io/movies-based-on-true-story/**`
 
-6. **Keys into the page.** Settings → API: the `Project URL` and the `anon`
-   key (also called publishable). Both are public by design, and committing
-   them to an open repository is fine: protection comes from the RLS policies
-   in `schema.sql`, not from keeping the key secret.
+6. **Keys into the page — done.** The `Project URL` and publishable key are
+   configured in `index.html`. Both are public by design, and committing them
+   to an open repository is fine: protection comes from the RLS policies in
+   `schema.sql`, not from keeping the key secret.
 
    The `service_role` key (also called secret) never goes into the page, the
    repository, or a screenshot — it bypasses every policy.
 
-7. **Switch the backend.** In `index.html` find `let BE=LocalBackend;` and
-   point it at a Supabase implementation. The interface is already fixed:
-   `currentUser`, `signIn`, `loadAll`, `setMark`, `putMany`. Nothing else on
-   the page changes.
+7. **Backend — done.** `index.html` now logs in through Supabase Auth, loads
+   the whole group's marks, writes only the active user's rows, and migrates
+   that user's previous localStorage marks once after the first login.
 
 ## Two things not to miss
 

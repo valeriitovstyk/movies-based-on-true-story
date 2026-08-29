@@ -2,7 +2,7 @@
 
 A static site: **317 feature films from 2000–2026 based on real events**, rated 7.4 or higher on IMDb with at least 5,000 votes. Thrillers and horror are kept behind a separate toggle; documentaries, series and TV movies are excluded.
 
-One page, no build step, no dependencies, no backend. All data is embedded in `index.html` — the file opens by double-clicking it from disk.
+One page and no build step. Film data is embedded in `index.html`; personal marks and ratings are stored in Supabase and sync after password login.
 
 > The interface and film notes are in Ukrainian. Only the title and this README are in English.
 
@@ -50,21 +50,21 @@ python3 -m http.server 8000
 
 ## Accounts
 
-Four accounts share the catalogue: **ira**, **olena**, **alex**, **laverka**, each with its own colour. Pick yours on first open; you can switch any time from the header.
+Four password-protected accounts share the catalogue: **ira**, **olena**, **alex**, **laverka**, each with its own colour. Pick yours on first open; you can switch any time from the header.
 
 Every account keeps its own "watched", "together" and "no translation" flags plus a 1–5 rating for every film. Each card shows the whole group — who has seen it and how they rated it — plus the group average next to the IMDb score. Extra filters include *нема перекладу* (no translation) and *ніхто з нас* (nobody in the group has seen it) for picking something for a movie night, along with sorting by the group's rating.
 
-Marks made before accounts existed are migrated into whichever account you pick first, once, with their original timestamps.
+Marks from the previous localStorage version are migrated to the corresponding Supabase account once, with their original timestamps. Newer data wins if the local and remote versions conflict.
 
 ## Where the data lives
 
-Right now: `localStorage`, per browser. Storage sits behind a small adapter (`LocalBackend` in `index.html`) whose interface — `currentUser`, `signIn`, `loadAll`, `setMark`, `putMany` — is the one Supabase will implement. Swapping the backend is a one-line change at `let BE=LocalBackend;`; nothing else in the page moves.
+Supabase stores the shared data. The page uses Supabase Auth for password login and the `profiles` and `marks` tables for group state. Row Level Security lets every signed-in account read the group while only changing its own rows.
 
-See `supabase/README.md` for the setup. The short version of the security model: Supabase's `anon` key is *meant* to be public and shipping it in the page is fine — protection comes from the RLS policies in `schema.sql`, not from hiding the key. The `service_role` key never goes near the browser.
+See `supabase/README.md` for the setup. The publishable key is intentionally present in the page — protection comes from the RLS policies in `schema.sql`, not from hiding that key. The `service_role` key never goes near the browser.
 
 ## Moving marks between devices
 
-Until the database is connected, marks don't sync on their own — you move them by hand:
+Marks now sync automatically. Export/import remains available for backup or manual recovery:
 
 1. **Export** → **Copy JSON** on the first device
 2. **Export** → paste the text into the field → **Import** on the second
@@ -73,7 +73,7 @@ Export covers the account you're currently signed in as, and the file records wh
 
 Import *merges* marks rather than overwriting them: where the two states differ, the more recent one wins. The export format is plain and fit for further analysis — every film with its metadata, flags, rating and the timestamp of the mark.
 
-Because storage is per-browser and per-origin, two people using the same published URL on different machines still keep entirely separate marks until the database is wired up.
+Passwords are handled by Supabase Auth and are never stored in this repository or in the site's own localStorage.
 
 ## Update the catalogue
 

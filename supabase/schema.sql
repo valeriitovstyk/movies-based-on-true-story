@@ -1,6 +1,6 @@
 -- Schema for "Movies: based on true story".
 -- Run as a single block in Supabase → SQL Editor after creating the project.
--- Until it is run, the page works against the local stub (LocalBackend in index.html).
+-- The published page expects this schema before Supabase login can load or save marks.
 
 -- ─────────────────────────────────────────────────────────────
 -- 1. Profiles: human names instead of uuids
