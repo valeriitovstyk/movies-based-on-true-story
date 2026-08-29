@@ -296,7 +296,7 @@ footer li{margin-bottom:6px}
     <details class="filter-panel">
       <summary class="filter-toggle">Фільтри</summary>
       <div class="filter-groups" aria-label="Категорії фільтрів">
-        <div class="filter-group">
+        <div class="filter-group" id="personalFilters">
           <div class="filter-label">Особисті</div>
           <div class="chips" id="mine"></div>
         </div>
@@ -356,6 +356,7 @@ footer li{margin-bottom:6px}
           <li>У кожного акаунта свої позначки й оцінки. У картці фільму видно всю групу: хто переглянув і з якою оцінкою.</li>
           <li>Позначки зберігаються у спільній базі Supabase і автоматично доступні після входу на іншому пристрої. Експорт лишається як резервна копія.</li>
           <li>Позначка «нема перекладу» допомагає зібрати окремий список фільмів без доступного перекладу.</li>
+          <li>Персональна позначка «з дитиною» формує ваш окремий список фільмів для спільного перегляду з дитиною.</li>
           <li><span class="tag loose">вільна інтерпретація</span> — реальна основа є, але з великими художніми вольностями.</li>
           <li><span class="tag thr">тег: трилер</span> — показуються кнопкою «+ трилери».</li>
           <li>Червона примітка — застереження про історичну достовірність.</li>
@@ -421,19 +422,25 @@ const SB=window.supabase&&window.supabase.createClient(SUPABASE_URL,SUPABASE_PUB
 });
 
 const rowToMark=row=>({
-  w:row.watched?1:0,n:row.together?1:0,nt:row.no_translation?1:0,r:row.rating||0,
+  w:row.watched?1:0,n:row.together?1:0,nt:row.no_translation?1:0,c:row.watch_with_child?1:0,r:row.rating||0,
   ts:row.updated_at?(Date.parse(row.updated_at)||0):0
 });
-const markToRow=(userId,imdbId,mark)=>({
-  user_id:userId,imdb_id:imdbId,watched:!!mark.w,together:!!mark.n,
-  no_translation:!!mark.nt,rating:mark.r||null,
-  updated_at:new Date(mark.ts||Date.now()).toISOString()
-});
+const markToRow=(userId,imdbId,mark,includeChild=true)=>{
+  const row={user_id:userId,imdb_id:imdbId,watched:!!mark.w,together:!!mark.n,
+    no_translation:!!mark.nt,rating:mark.r||null,
+    updated_at:new Date(mark.ts||Date.now()).toISOString()};
+  if(includeChild)row.watch_with_child=!!mark.c;
+  return row;
+};
+const missingChildColumn=error=>error&&(
+  error.code==='42703'||error.code==='PGRST204'||/watch_with_child/i.test(error.message||'')
+);
 
 const SupabaseBackend={
   kind:'supabase',
   userId:null,
   profileNames:{},
+  childColumnReady:true,
   ensure(){if(!SB)throw new Error('Не завантажилася бібліотека Supabase. Перевірте інтернет і оновіть сторінку.');},
   async resolveProfile(user){
     const {data:profile,error}=await SB.from('profiles').select('name').eq('id',user.id).single();
@@ -473,10 +480,15 @@ const SupabaseBackend={
   },
   async loadAll(){
     this.ensure();
-    const [{data:profiles,error:profilesError},{data:marks,error:marksError}]=await Promise.all([
+    let [profilesResult,marksResult]=await Promise.all([
       SB.from('profiles').select('id,name'),
-      SB.from('marks').select('user_id,imdb_id,watched,together,no_translation,rating,updated_at')
+      SB.from('marks').select('user_id,imdb_id,watched,together,no_translation,watch_with_child,rating,updated_at')
     ]);
+    if(missingChildColumn(marksResult.error)){
+      this.childColumnReady=false;
+      marksResult=await SB.from('marks').select('user_id,imdb_id,watched,together,no_translation,rating,updated_at');
+    }else this.childColumnReady=true;
+    const {data:profiles,error:profilesError}=profilesResult,{data:marks,error:marksError}=marksResult;
     if(profilesError)throw profilesError;
     if(marksError)throw marksError;
     const names=Object.fromEntries((profiles||[]).map(p=>[p.id,String(p.name||'').toLowerCase()]));
@@ -492,23 +504,33 @@ const SupabaseBackend={
   async setMark(userId,imdbId,mark){
     this.ensure();
     if(!this.userId)throw new Error('Сесія завершилася. Увійдіть знову.');
-    const {error}=await SB.from('marks').upsert(markToRow(this.userId,imdbId,mark),{onConflict:'user_id,imdb_id'});
+    if(!this.childColumnReady&&mark.c)throw new Error('Спочатку запустіть оновлений supabase/schema.sql, щоб зберігати позначку «з дитиною».');
+    const {error}=await SB.from('marks').upsert(markToRow(this.userId,imdbId,mark,this.childColumnReady),{onConflict:'user_id,imdb_id'});
     if(error)throw error;
     return mark;
   },
   async putMany(userId,marks){
     this.ensure();
     if(!this.userId)throw new Error('Сесія завершилася. Увійдіть знову.');
-    const {data,error}=await SB.from('marks')
-      .select('user_id,imdb_id,watched,together,no_translation,rating,updated_at')
+    let result=await SB.from('marks')
+      .select('user_id,imdb_id,watched,together,no_translation,watch_with_child,rating,updated_at')
       .eq('user_id',this.userId);
+    if(missingChildColumn(result.error)){
+      this.childColumnReady=false;
+      result=await SB.from('marks')
+        .select('user_id,imdb_id,watched,together,no_translation,rating,updated_at')
+        .eq('user_id',this.userId);
+    }
+    const {data,error}=result;
     if(error)throw error;
     const remote={};
     for(const row of data||[])remote[row.imdb_id]=rowToMark(row);
     const merged=mergeMarks(remote,marks);
     const changed=Object.entries(merged).filter(([id,mark])=>!remote[id]||(mark.ts||0)>(remote[id].ts||0));
     if(changed.length){
-      const rows=changed.map(([id,mark])=>markToRow(this.userId,id,mark));
+      if(!this.childColumnReady&&changed.some(([,mark])=>mark.c))
+        throw new Error('Спочатку запустіть оновлений supabase/schema.sql, щоб імпортувати список «з дитиною».');
+      const rows=changed.map(([id,mark])=>markToRow(this.userId,id,mark,this.childColumnReady));
       const {error:upsertError}=await SB.from('marks').upsert(rows,{onConflict:'user_id,imdb_id'});
       if(upsertError)throw upsertError;
     }
@@ -577,13 +599,13 @@ async function importMarks(text){
   else if(j&&Array.isArray(j.films)){
     for(const f of j.films){
       if(!f||!f.imdb_id)continue;
-      incoming[f.imdb_id]={w:f.watched?1:0,n:(f.together||f.with_sofiyka||f.with_nathan)?1:0,nt:f.no_translation?1:0,
+      incoming[f.imdb_id]={w:f.watched?1:0,n:(f.together||f.with_sofiyka||f.with_nathan)?1:0,nt:f.no_translation?1:0,c:f.watch_with_child?1:0,
         r:f.my_rating||0,ts:f.marked_at?(Date.parse(f.marked_at)||Date.now()):Date.now()};
     }
   }else if(mergeCheck(j)){incoming=j;}
   const n=Object.keys(incoming).length;
   if(!n)return 'У файлі не знайшлося жодної позначки.';
-  if(!ME)return 'Спершу оберіть акаунт — імпорт іде в позначки конкретної людини.';
+  if(!ME)return 'Спершу увійдіть — імпорт додається до позначок поточного користувача.';
   try{
     ALL[ME]=await BE.putMany(ME,incoming);
     render();setStatus('imported');
@@ -596,8 +618,8 @@ async function importMarks(text){
 function showBanner(t){const b=el('banner');b.textContent=t;b.classList.remove('hide');}
 
 /* ---------- marks ---------- */
-function m(id){return myMarks()[id]||{w:0,n:0,nt:0,r:0,ts:0};}
-function marksOf(uid,id){return (ALL[uid]&&ALL[uid][id])||{w:0,n:0,nt:0,r:0,ts:0};}
+function m(id){return myMarks()[id]||{w:0,n:0,nt:0,c:0,r:0,ts:0};}
+function marksOf(uid,id){return (ALL[uid]&&ALL[uid][id])||{w:0,n:0,nt:0,c:0,r:0,ts:0};}
 function groupSeen(id){return USERS.filter(u=>marksOf(u.id,id).w).length;}
 function groupAvg(id){
   const rs=USERS.map(u=>marksOf(u.id,id).r).filter(Boolean);
@@ -606,14 +628,15 @@ function groupAvg(id){
 function setMark(id,patch){
   if(!ME)return;
   const cur=m(id);
-  const next={w:cur.w?1:0,n:cur.n?1:0,nt:cur.nt?1:0,r:cur.r||0,ts:Date.now()};
+  const next={w:cur.w?1:0,n:cur.n?1:0,nt:cur.nt?1:0,c:cur.c?1:0,r:cur.r||0,ts:Date.now()};
   Object.assign(next,patch);
   next.ts=Date.now();
   if(next.n&&!next.w)next.w=1;
   (ALL[ME]=ALL[ME]||{})[id]=next;
-  BE.setMark(ME,id,next).then(queueSave).catch(()=>{
+  BE.setMark(ME,id,next).then(queueSave).catch(err=>{
     if(ALL[ME]&&ALL[ME][id]===next){ALL[ME][id]=cur;updateRow(id);}
     setStatus('error');
+    if(err&&err.message)showBanner(err.message);
   });
 }
 
@@ -621,7 +644,7 @@ function setMark(id,patch){
 const THEMES=[...new Set(DATA.map(f=>f.theme))].map(t=>({t,n:DATA.filter(f=>f.theme===t).length})).sort((a,b)=>b.n-a.n);
 const REGIONS=[...new Set(DATA.map(f=>f.region))].map(r=>({r,n:DATA.filter(f=>f.region===r).length})).sort((a,b)=>b.n-a.n);
 const DECADES=['2000-ті','2010-ті','2020-ті'];
-const MINE=[['unseen','ще не переглянуто'],['no_translation','нема перекладу'],['seen','переглянуті'],['together','разом'],['rated','з моєю оцінкою'],['top','мої 4–5'],['nobody','ніхто з нас']];
+const MINE=[['unseen','ще не переглянуто'],['with_child','подивитись з дитиною'],['no_translation','нема перекладу'],['seen','переглянуті'],['together','разом'],['rated','з моєю оцінкою'],['top','мої 4–5'],['nobody','ніхто з нас']];
 
 el('decades').innerHTML=DECADES.map(d=>`<button class="chip" data-dec="${d}" type="button">${d}<span class="c">${DATA.filter(f=>f.decade===d).length}</span></button>`).join('');
 el('themes').innerHTML=THEMES.map(o=>`<button class="chip" data-theme="${o.t}" type="button">${o.t}<span class="c">${o.n}</span></button>`).join('');
@@ -636,6 +659,7 @@ function mineOk(f,mode){
   const mk=m(f.imdb_id);
   if(mode==='seen')return !!mk.w;
   if(mode==='unseen')return !mk.w;
+  if(mode==='with_child')return !!mk.c;
   if(mode==='no_translation')return !!mk.nt;
   if(mode==='together')return !!mk.n;
   if(mode==='rated')return !!mk.r;
@@ -739,6 +763,7 @@ function row(f){
         <button class="mk${mk.w?' on':''}" data-w="${f.imdb_id}" type="button"${dis}><span class="bx"></span>переглянуто</button>
         <button class="mk${mk.n?' on':''}" data-n="${f.imdb_id}" type="button"${dis}><span class="bx"></span>разом</button>
         <button class="mk missing${mk.nt?' on':''}" data-nt="${f.imdb_id}" type="button"${dis}><span class="bx"></span>нема перекладу</button>
+        <button class="mk${mk.c?' on':''}" data-child="${f.imdb_id}" type="button"${dis}><span class="bx"></span>з дитиною</button>
         <span class="mylabel">моя оцінка</span>
         <span class="stars">${stars}</span>
       </div>
@@ -757,6 +782,7 @@ function render(){
   el('thr').classList.toggle('on',S.thr);
   el('notIndia').classList.toggle('on',S.notIndia);
   el('notIndia').setAttribute('aria-pressed',String(S.notIndia));
+  el('personalFilters').hidden=!ME;
   document.querySelectorAll('[data-dec]').forEach(b=>b.classList.toggle('on',S.decades.has(b.dataset.dec)));
   document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',S.themes.has(b.dataset.theme)));
   document.querySelectorAll('[data-mine]').forEach(b=>b.classList.toggle('on',S.mine===b.dataset.mine));
@@ -826,11 +852,12 @@ el('rand').addEventListener('click',()=>{
 });
 el('list').addEventListener('click',e=>{
   if(READONLY)return;
-  const toggle=e.target.closest('[data-comment-toggle]'),w=e.target.closest('[data-w]'),n=e.target.closest('[data-n]'),nt=e.target.closest('[data-nt]'),st=e.target.closest('[data-star]');
+  const toggle=e.target.closest('[data-comment-toggle]'),w=e.target.closest('[data-w]'),n=e.target.closest('[data-n]'),nt=e.target.closest('[data-nt]'),child=e.target.closest('[data-child]'),st=e.target.closest('[data-star]');
   if(toggle){toggleComments(toggle.dataset.commentToggle);}
   else if(w){const id=w.dataset.w;const cur=m(id);setMark(id,{w:cur.w?0:1,n:cur.w?0:cur.n});updateRow(id);}
   else if(n){const id=n.dataset.n;const cur=m(id);setMark(id,{n:cur.n?0:1});updateRow(id);}
   else if(nt){const id=nt.dataset.nt;const cur=m(id);setMark(id,{nt:cur.nt?0:1});updateRow(id);}
+  else if(child){const id=child.dataset.child;const cur=m(id);setMark(id,{c:cur.c?0:1});updateRow(id);}
   else if(st){const id=st.dataset.id,v=+st.dataset.star;const cur=m(id);setMark(id,{r:cur.r===v?0:v,w:1});updateRow(id);}
 });
 el('list').addEventListener('submit',async e=>{
@@ -875,26 +902,26 @@ function updateRow(id){
 
 /* ---------- export ---------- */
 function exportPayload(){
-  const rows=DATA.filter(f=>{const k=m(f.imdb_id);return k.w||k.n||k.nt||k.r;}).map(f=>{
+  const rows=DATA.filter(f=>{const k=m(f.imdb_id);return k.w||k.n||k.nt||k.c||k.r;}).map(f=>{
     const k=m(f.imdb_id);
     return {imdb_id:f.imdb_id,title:f.title,title_uk:f.title_uk,year:f.year,imdb_rating:f.rating,
       country:f.country,theme:f.theme,genres:f.genres,basis:f.basis,
-      watched:!!k.w,together:!!k.n,no_translation:!!k.nt,my_rating:k.r||null,marked_at:k.ts?new Date(k.ts).toISOString():null};
+      watched:!!k.w,together:!!k.n,no_translation:!!k.nt,watch_with_child:!!k.c,my_rating:k.r||null,marked_at:k.ts?new Date(k.ts).toISOString():null};
   }).sort((a,b)=>(b.my_rating||0)-(a.my_rating||0));
   return {source:'Movies: based on true story — catalogue of films based on real events',
     user:ME||null,exported_at:new Date().toISOString(),
     catalogue_size:DATA.length,marked:rows.length,
     watched:rows.filter(r=>r.watched).length,together:rows.filter(r=>r.together).length,
-    no_translation:rows.filter(r=>r.no_translation).length,films:rows};
+    no_translation:rows.filter(r=>r.no_translation).length,watch_with_child:rows.filter(r=>r.watch_with_child).length,films:rows};
 }
 function toCsv(p){
-  const head=['imdb_id','title','title_uk','year','imdb_rating','country','theme','watched','together','no_translation','my_rating','marked_at'];
+  const head=['imdb_id','title','title_uk','year','imdb_rating','country','theme','watched','together','no_translation','watch_with_child','my_rating','marked_at'];
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   return [head.join(',')].concat(p.films.map(f=>head.map(h=>q(f[h])).join(','))).join('\n');
 }
 el('exp').addEventListener('click',()=>{
   const p=exportPayload();
-  el('expinfo').textContent=p.marked?`Акаунт «${p.user}»: ${p.marked} позначених ${plural(p.marked)}, з них переглянуто ${p.watched}, разом ${p.together}, без перекладу ${p.no_translation}. Копіюйте, щоб перенести на інший пристрій.`:'У цьому акаунті ще нічого не позначено — експорт буде порожній.';
+  el('expinfo').textContent=p.marked?`Акаунт «${p.user}»: ${p.marked} позначених ${plural(p.marked)}, з них переглянуто ${p.watched}, разом ${p.together}, з дитиною ${p.watch_with_child}, без перекладу ${p.no_translation}. Копіюйте, щоб перенести на інший пристрій.`:'У цьому акаунті ще нічого не позначено — експорт буде порожній.';
   el('exptext').value=JSON.stringify(p,null,1);
   el('expdlg').showModal();
 });
@@ -960,7 +987,7 @@ async function logout(){
   const button=el('logout');button.disabled=true;
   try{await BE.signOut();}
   catch(err){button.disabled=false;showBanner('Не вдалося завершити сесію: '+(err.message||'помилка Supabase')+'.');return;}
-  ME=null;ALL={};READONLY=true;resetComments();
+  ME=null;ALL={};READONLY=true;S.mine='';resetComments();
   renderUserbar();render();setStatus('');
 }
 
@@ -984,7 +1011,7 @@ async function boot(){
   try{
     ME=await BE.currentUser();
     if(!ME||!USER_BY_ID[ME]){
-      ME=null;ALL={};READONLY=true;resetComments();
+      ME=null;ALL={};READONLY=true;S.mine='';resetComments();
       renderUserbar();render();setStatus('');return;
     }
     ALL=await BE.loadAll();
@@ -993,7 +1020,7 @@ async function boot(){
     renderUserbar();render();setStatus('');
     if(moved)showBanner(`Перенесено ${moved} ${plural(moved)} з цього браузера в Supabase для акаунта «${USER_BY_ID[ME].name}».`);
   }catch(err){
-    ME=null;ALL={};READONLY=true;resetComments();renderUserbar();render();setStatus('error');
+    ME=null;ALL={};READONLY=true;S.mine='';resetComments();renderUserbar();render();setStatus('error');
     el('loginError').textContent=err.message||'Не вдалося підключитися до Supabase.';
   }
 }

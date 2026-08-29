@@ -52,7 +52,7 @@ python3 -m http.server 8000
 
 Four password-protected accounts share the catalogue: **ira**, **olena**, **alex**, **laverka**, each with its own colour. Sign in with the corresponding Supabase email and password in the compact form at the top right; the profile is detected automatically.
 
-Every account keeps its own "watched", "together" and "no translation" flags plus a 1–5 rating for every film. Each card shows the whole group — who has seen it and how they rated it — plus the group average next to the IMDb score. Extra filters include *нема перекладу* (no translation) and *ніхто з нас* (nobody in the group has seen it) for picking something for a movie night, along with sorting by the group's rating.
+Every account keeps its own "watched", "together", "no translation", and "watch with a child" flags plus a 1–5 rating for every film. The personal *подивитись з дитиною* filter turns the last flag into a private watchlist. Each card shows the whole group — who has seen it and how they rated it — plus the group average next to the IMDb score. Extra filters include *нема перекладу* (no translation) and *ніхто з нас* (nobody in the group has seen it) for picking something for a movie night, along with sorting by the group's rating.
 
 Signed-in users can also open a collapsed comments section on any film, read the group's comments, and add their own. Comments are fetched only when that section is opened and are hidden completely from signed-out visitors.
 

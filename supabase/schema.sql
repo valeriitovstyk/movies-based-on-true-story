@@ -64,12 +64,14 @@ create table if not exists public.marks (
   watched    boolean     not null default false,
   together   boolean     not null default false,
   no_translation boolean not null default false,
+  watch_with_child boolean not null default false,
   rating     smallint    check (rating between 1 and 5),
   updated_at timestamptz not null default now(),
   primary key (user_id, imdb_id)
 );
 
 alter table public.marks add column if not exists no_translation boolean not null default false;
+alter table public.marks add column if not exists watch_with_child boolean not null default false;
 
 alter table public.marks enable row level security;
 
