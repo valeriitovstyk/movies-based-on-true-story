@@ -719,14 +719,17 @@ function renderStats(){
   const rated=ids.map(k=>mine[k]&&mine[k].r).filter(Boolean);
   const myAvg=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length).toFixed(1):'–';
   const anySeen=DATA.filter(f=>groupSeen(f.imdb_id)>0).length;
-  el('stats').innerHTML=[
+  const stats=[
     [DATA.length,'фільмів у каталозі',''],
     [(DATA.reduce((s,f)=>s+f.rating,0)/DATA.length).toFixed(2),'середній IMDb',''],
-    [DATA.filter(f=>f.rating>=8).length,'з рейтингом 8.0+',''],
+    [DATA.filter(f=>f.rating>=8).length,'з рейтингом 8.0+','']
+  ];
+  if(ME)stats.push(
     [seen,'переглянуто вами','mine'],
     [myAvg,'ваша середня оцінка','mine'],
     [anySeen,'бачив хтось із нас','grp']
-  ].map(([n,l,c])=>`<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+  );
+  el('stats').innerHTML=stats.map(([n,l,c])=>`<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
 }
 
 /* ---------- events ---------- */
