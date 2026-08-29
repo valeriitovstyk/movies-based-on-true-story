@@ -3,12 +3,16 @@
 Steps 1, 2 and 5 are done by hand in the Supabase web console.
 
 1. **Project.** supabase.com → New project, region `eu-central` (Frankfurt).
-   Put the database password in a password manager.
+   Put the database password in a password manager. Keep **Enable Data API**
+   on, turn **Automatically expose new tables** off, and turn
+   **Enable automatic RLS** on. The schema grants the minimum API access
+   explicitly.
 
 2. **Schema.** SQL Editor → paste all of `schema.sql` → Run.
 
 3. **Accounts.** Authentication → Users → Add user, four times, with
-   *Auto Confirm User* ticked: `ira@…`, `olena@…`, `alex@…`, `laverka@…`.
+   *Auto Confirm User* ticked: `ira@movies.local`, `olena@movies.local`,
+   `alex@movies.local`, `laverka@movies.local`.
    Hand out the passwords over chat.
 
    We deliberately avoid Supabase's built-in email on the free tier: it is
@@ -37,9 +41,10 @@ Steps 1, 2 and 5 are done by hand in the Supabase web console.
 
 ## Two things not to miss
 
-`alter table … enable row level security` is already in `schema.sql`. Without
-it the policies do nothing and the public key opens the table to the whole
-internet for writing — the most common mistake people make with Supabase.
+`alter table … enable row level security` and least-privilege `grant`
+statements are already in `schema.sql`. RLS decides which rows a user may
+reach; grants decide which operations can reach the table at all. Anonymous
+visitors receive no table privileges.
 
 A free project sleeps after roughly a week without requests. Fix it with a
 cron job in the existing GitHub Actions workflow that pokes the database
