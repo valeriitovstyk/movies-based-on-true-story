@@ -130,6 +130,9 @@ li.film.hit{animation:flash 1.6s ease-out}
 .mk.on{background:var(--good-bg);border-color:var(--good);color:var(--good);font-weight:500}
 .mk.on .bx{opacity:1;background:var(--good);border-color:var(--good)}
 .mk.on .bx::after{content:"";position:absolute;left:3.5px;top:.5px;width:4px;height:8px;border:solid var(--surface);border-width:0 2px 2px 0;transform:rotate(42deg)}
+.mk.missing:hover{border-color:var(--warn);color:var(--warn)}
+.mk.missing.on{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.mk.missing.on .bx{background:var(--warn);border-color:var(--warn)}
 .stars{display:flex;gap:1px;margin-left:4px;align-items:center}
 .star{background:none;border:0;padding:3px 1px;cursor:pointer;color:var(--ink-3);line-height:0;opacity:.45}
 .star:hover{opacity:1;color:var(--accent)}
@@ -328,6 +331,7 @@ footer li{margin-bottom:6px}
         <ul>
           <li>У кожного акаунта свої позначки й оцінки. У картці фільму видно всю групу: хто переглянув і з якою оцінкою.</li>
           <li>Поки що все зберігається в цьому браузері (localStorage) — спільної бази ще немає, тож між пристроями стан переноситься через «Експорт» → «Копіювати JSON» → «Імпортувати».</li>
+          <li>Позначка «нема перекладу» допомагає зібрати окремий список фільмів без доступного перекладу.</li>
           <li><span class="tag loose">вільна інтерпретація</span> — реальна основа є, але з великими художніми вольностями.</li>
           <li><span class="tag thr">тег: трилер</span> — показуються кнопкою «+ трилери».</li>
           <li>Червона примітка — застереження про історичну достовірність.</li>
@@ -397,7 +401,7 @@ const LocalBackend={
 };
 let BE=LocalBackend;
 
-let ALL={};      // {userId:{imdbId:{w,n,r,ts}}} — позначки всіх
+let ALL={};      // {userId:{imdbId:{w,n,nt,r,ts}}} — позначки всіх
 let ME=null;     // id поточного акаунта
 let READONLY=false;
 const myMarks=()=>(ME&&ALL[ME])||{};
@@ -431,7 +435,7 @@ function importMarks(text){
   else if(j&&Array.isArray(j.films)){
     for(const f of j.films){
       if(!f||!f.imdb_id)continue;
-      incoming[f.imdb_id]={w:f.watched?1:0,n:(f.together||f.with_sofiyka||f.with_nathan)?1:0,
+      incoming[f.imdb_id]={w:f.watched?1:0,n:(f.together||f.with_sofiyka||f.with_nathan)?1:0,nt:f.no_translation?1:0,
         r:f.my_rating||0,ts:f.marked_at?(Date.parse(f.marked_at)||Date.now()):Date.now()};
     }
   }else if(mergeCheck(j)){incoming=j;}
@@ -446,8 +450,8 @@ function importMarks(text){
 function showBanner(t){const b=el('banner');b.textContent=t;b.classList.remove('hide');}
 
 /* ---------- marks ---------- */
-function m(id){return myMarks()[id]||{w:0,n:0,r:0,ts:0};}
-function marksOf(uid,id){return (ALL[uid]&&ALL[uid][id])||{w:0,n:0,r:0,ts:0};}
+function m(id){return myMarks()[id]||{w:0,n:0,nt:0,r:0,ts:0};}
+function marksOf(uid,id){return (ALL[uid]&&ALL[uid][id])||{w:0,n:0,nt:0,r:0,ts:0};}
 function groupSeen(id){return USERS.filter(u=>marksOf(u.id,id).w).length;}
 function groupAvg(id){
   const rs=USERS.map(u=>marksOf(u.id,id).r).filter(Boolean);
@@ -456,7 +460,7 @@ function groupAvg(id){
 function setMark(id,patch){
   if(!ME)return;
   const cur=m(id);
-  const next={w:cur.w?1:0,n:cur.n?1:0,r:cur.r||0,ts:Date.now()};
+  const next={w:cur.w?1:0,n:cur.n?1:0,nt:cur.nt?1:0,r:cur.r||0,ts:Date.now()};
   Object.assign(next,patch);
   next.ts=Date.now();
   if(next.n&&!next.w)next.w=1;
@@ -468,7 +472,7 @@ function setMark(id,patch){
 const THEMES=[...new Set(DATA.map(f=>f.theme))].map(t=>({t,n:DATA.filter(f=>f.theme===t).length})).sort((a,b)=>b.n-a.n);
 const REGIONS=[...new Set(DATA.map(f=>f.region))].map(r=>({r,n:DATA.filter(f=>f.region===r).length})).sort((a,b)=>b.n-a.n);
 const DECADES=['2000-ті','2010-ті','2020-ті'];
-const MINE=[['unseen','ще не переглянуто'],['seen','переглянуті'],['together','разом'],['rated','з моєю оцінкою'],['top','мої 4–5'],['nobody','ніхто з нас']];
+const MINE=[['unseen','ще не переглянуто'],['no_translation','нема перекладу'],['seen','переглянуті'],['together','разом'],['rated','з моєю оцінкою'],['top','мої 4–5'],['nobody','ніхто з нас']];
 
 el('decades').innerHTML=DECADES.map(d=>`<button class="chip" data-dec="${d}" type="button">${d}<span class="c">${DATA.filter(f=>f.decade===d).length}</span></button>`).join('');
 el('themes').innerHTML=THEMES.map(o=>`<button class="chip" data-theme="${o.t}" type="button">${o.t}<span class="c">${o.n}</span></button>`).join('');
@@ -483,6 +487,7 @@ function mineOk(f,mode){
   const mk=m(f.imdb_id);
   if(mode==='seen')return !!mk.w;
   if(mode==='unseen')return !mk.w;
+  if(mode==='no_translation')return !!mk.nt;
   if(mode==='together')return !!mk.n;
   if(mode==='rated')return !!mk.r;
   if(mode==='top')return mk.r>=4;
@@ -556,6 +561,7 @@ function row(f){
       <div class="marks">
         <button class="mk${mk.w?' on':''}" data-w="${f.imdb_id}" type="button"${dis}><span class="bx"></span>переглянуто</button>
         <button class="mk${mk.n?' on':''}" data-n="${f.imdb_id}" type="button"${dis}><span class="bx"></span>разом</button>
+        <button class="mk missing${mk.nt?' on':''}" data-nt="${f.imdb_id}" type="button"${dis}><span class="bx"></span>нема перекладу</button>
         <span class="mylabel">моя оцінка</span>
         <span class="stars">${stars}</span>
       </div>
@@ -639,9 +645,10 @@ el('rand').addEventListener('click',()=>{
 });
 el('list').addEventListener('click',e=>{
   if(READONLY)return;
-  const w=e.target.closest('[data-w]'),n=e.target.closest('[data-n]'),st=e.target.closest('[data-star]');
+  const w=e.target.closest('[data-w]'),n=e.target.closest('[data-n]'),nt=e.target.closest('[data-nt]'),st=e.target.closest('[data-star]');
   if(w){const id=w.dataset.w;const cur=m(id);setMark(id,{w:cur.w?0:1,n:cur.w?0:cur.n});updateRow(id);}
   else if(n){const id=n.dataset.n;const cur=m(id);setMark(id,{n:cur.n?0:1});updateRow(id);}
+  else if(nt){const id=nt.dataset.nt;const cur=m(id);setMark(id,{nt:cur.nt?0:1});updateRow(id);}
   else if(st){const id=st.dataset.id,v=+st.dataset.star;const cur=m(id);setMark(id,{r:cur.r===v?0:v,w:1});updateRow(id);}
 });
 function updateRow(id){
@@ -661,25 +668,26 @@ function updateRow(id){
 
 /* ---------- export ---------- */
 function exportPayload(){
-  const rows=DATA.filter(f=>{const k=m(f.imdb_id);return k.w||k.n||k.r;}).map(f=>{
+  const rows=DATA.filter(f=>{const k=m(f.imdb_id);return k.w||k.n||k.nt||k.r;}).map(f=>{
     const k=m(f.imdb_id);
     return {imdb_id:f.imdb_id,title:f.title,title_uk:f.title_uk,year:f.year,imdb_rating:f.rating,
       country:f.country,theme:f.theme,genres:f.genres,basis:f.basis,
-      watched:!!k.w,together:!!k.n,my_rating:k.r||null,marked_at:k.ts?new Date(k.ts).toISOString():null};
+      watched:!!k.w,together:!!k.n,no_translation:!!k.nt,my_rating:k.r||null,marked_at:k.ts?new Date(k.ts).toISOString():null};
   }).sort((a,b)=>(b.my_rating||0)-(a.my_rating||0));
   return {source:'Movies: based on true story — catalogue of films based on real events',
     user:ME||null,exported_at:new Date().toISOString(),
     catalogue_size:DATA.length,marked:rows.length,
-    watched:rows.filter(r=>r.watched).length,together:rows.filter(r=>r.together).length,films:rows};
+    watched:rows.filter(r=>r.watched).length,together:rows.filter(r=>r.together).length,
+    no_translation:rows.filter(r=>r.no_translation).length,films:rows};
 }
 function toCsv(p){
-  const head=['imdb_id','title','title_uk','year','imdb_rating','country','theme','watched','together','my_rating','marked_at'];
+  const head=['imdb_id','title','title_uk','year','imdb_rating','country','theme','watched','together','no_translation','my_rating','marked_at'];
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   return [head.join(',')].concat(p.films.map(f=>head.map(h=>q(f[h])).join(','))).join('\n');
 }
 el('exp').addEventListener('click',()=>{
   const p=exportPayload();
-  el('expinfo').textContent=p.marked?`Акаунт «${p.user}»: ${p.marked} позначених ${plural(p.marked)}, з них переглянуто ${p.watched}, разом ${p.together}. Копіюйте, щоб перенести на інший пристрій.`:'У цьому акаунті ще нічого не позначено — експорт буде порожній.';
+  el('expinfo').textContent=p.marked?`Акаунт «${p.user}»: ${p.marked} позначених ${plural(p.marked)}, з них переглянуто ${p.watched}, разом ${p.together}, без перекладу ${p.no_translation}. Копіюйте, щоб перенести на інший пристрій.`:'У цьому акаунті ще нічого не позначено — експорт буде порожній.';
   el('exptext').value=JSON.stringify(p,null,1);
   el('expdlg').showModal();
 });

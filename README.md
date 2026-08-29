@@ -52,7 +52,7 @@ python3 -m http.server 8000
 
 Four accounts share the catalogue: **ira**, **olena**, **alex**, **laverka**, each with its own colour. Pick yours on first open; you can switch any time from the header.
 
-Every account keeps its own "watched" flag, "together" flag and 1–5 rating for every film. Each card shows the whole group — who has seen it and how they rated it — plus the group average next to the IMDb score. Two extra filters come with this: *ніхто з нас* (nobody in the group has seen it) for picking something for a movie night, and sorting by the group's rating.
+Every account keeps its own "watched", "together" and "no translation" flags plus a 1–5 rating for every film. Each card shows the whole group — who has seen it and how they rated it — plus the group average next to the IMDb score. Extra filters include *нема перекладу* (no translation) and *ніхто з нас* (nobody in the group has seen it) for picking something for a movie night, along with sorting by the group's rating.
 
 Marks made before accounts existed are migrated into whichever account you pick first, once, with their original timestamps.
 

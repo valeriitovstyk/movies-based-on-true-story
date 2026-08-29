@@ -47,10 +47,13 @@ create table if not exists marks (
   imdb_id    text        not null,
   watched    boolean     not null default false,
   together   boolean     not null default false,
+  no_translation boolean not null default false,
   rating     smallint    check (rating between 1 and 5),
   updated_at timestamptz not null default now(),
   primary key (user_id, imdb_id)
 );
+
+alter table marks add column if not exists no_translation boolean not null default false;
 
 alter table marks enable row level security;
 
