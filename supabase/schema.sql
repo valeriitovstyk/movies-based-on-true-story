@@ -101,7 +101,39 @@ create policy "marks: delete own" on public.marks
 create index if not exists marks_imdb_idx on public.marks (imdb_id);
 
 -- ─────────────────────────────────────────────────────────────
--- 3. Per-film summary
+-- 3. Comments: signed-in group members can read all and add their own
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.comments (
+  id         bigint generated always as identity primary key,
+  user_id    uuid        not null references auth.users(id) on delete cascade,
+  imdb_id    text        not null,
+  body       text        not null check (char_length(btrim(body)) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+
+alter table public.comments enable row level security;
+
+revoke all on table public.comments from anon, authenticated;
+grant select, insert on table public.comments to authenticated;
+grant all on table public.comments to service_role;
+revoke all on sequence public.comments_id_seq from anon, authenticated;
+grant usage, select on sequence public.comments_id_seq to authenticated;
+grant all on sequence public.comments_id_seq to service_role;
+
+drop policy if exists "comments: read all" on public.comments;
+create policy "comments: read all" on public.comments
+  for select to authenticated using (true);
+
+drop policy if exists "comments: insert own" on public.comments;
+create policy "comments: insert own" on public.comments
+  for insert to authenticated
+  with check (auth.uid() = user_id);
+
+create index if not exists comments_imdb_created_idx
+  on public.comments (imdb_id, created_at);
+
+-- ─────────────────────────────────────────────────────────────
+-- 4. Per-film summary
 -- ─────────────────────────────────────────────────────────────
 -- security_invoker = true is required: without it the view runs with the
 -- owner's rights and silently bypasses RLS.

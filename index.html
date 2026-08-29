@@ -215,6 +215,24 @@ footer li{margin-bottom:6px}
 .score .grp{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);margin-top:4px}
 .stat.grp .n{color:var(--accent)}
 
+.comments{margin-top:10px}
+.comment-toggle{display:inline-flex;align-items:center;gap:7px;background:none;border:0;padding:3px 0;cursor:pointer;color:var(--accent);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.comment-toggle::after{content:"+";font-size:16px;line-height:1}
+.comment-toggle[aria-expanded="true"]::after{content:"−"}
+.comment-panel{margin-top:7px;border-left:2px solid var(--line);padding:4px 0 2px 12px;max-width:70ch}
+.comment-list{display:grid;gap:8px;margin-bottom:10px}
+.comment{background:var(--surface);border:1px solid var(--line-2);border-radius:3px;padding:8px 10px}
+.comment-head{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:12px;color:var(--ink-3)}
+.comment-head .nm{font-weight:600;color:var(--uc)}
+.comment-time{font-family:"IBM Plex Mono",monospace;font-size:10px;margin-left:auto}
+.comment-body{font-size:13.5px;color:var(--ink-2);white-space:pre-wrap;overflow-wrap:anywhere}
+.comment-empty,.comment-loading,.comment-error{font-size:13px;color:var(--ink-3);margin:2px 0 9px}
+.comment-error{color:var(--warn)}
+.comment-form{display:flex;align-items:flex-end;gap:7px}
+.comment-form textarea{flex:1;min-height:58px;max-height:160px;resize:vertical;border:1px solid var(--line);border-radius:3px;background:var(--surface);color:var(--ink);padding:8px 9px;font:13px/1.4 "IBM Plex Sans",sans-serif}
+.comment-form textarea:focus{border-color:var(--accent);outline:none}
+.comment-form .btn{padding:8px 11px}
+
 @media (max-width:640px){
   header.top{padding:34px 0 20px}
   .topline{display:block}
@@ -224,6 +242,8 @@ footer li{margin-bottom:6px}
   .login-inline input,.login-inline input[type="password"]{width:100%}
   .login-inline input[type="email"]{grid-column:1/-1}
   .login-inline .login-error{text-align:left;grid-column:1/-1}
+  .comment-form{align-items:stretch;flex-direction:column}
+  .comment-form .btn{align-self:flex-start}
   .filter-group{grid-template-columns:1fr;gap:4px}
   .filter-label{padding-top:2px}
   li.film{grid-template-columns:50px 1fr;gap:12px}
@@ -413,6 +433,7 @@ const markToRow=(userId,imdbId,mark)=>({
 const SupabaseBackend={
   kind:'supabase',
   userId:null,
+  profileNames:{},
   ensure(){if(!SB)throw new Error('Не завантажилася бібліотека Supabase. Перевірте інтернет і оновіть сторінку.');},
   async resolveProfile(user){
     const {data:profile,error}=await SB.from('profiles').select('name').eq('id',user.id).single();
@@ -459,6 +480,7 @@ const SupabaseBackend={
     if(profilesError)throw profilesError;
     if(marksError)throw marksError;
     const names=Object.fromEntries((profiles||[]).map(p=>[p.id,String(p.name||'').toLowerCase()]));
+    this.profileNames=names;
     const all={};
     for(const u of USERS)all[u.id]={};
     for(const row of marks||[]){
@@ -491,6 +513,28 @@ const SupabaseBackend={
       if(upsertError)throw upsertError;
     }
     return merged;
+  },
+  async loadComments(imdbId){
+    this.ensure();
+    if(!this.userId)throw new Error('Сесія завершилася. Увійдіть знову.');
+    const {data,error}=await SB.from('comments')
+      .select('id,user_id,body,created_at')
+      .eq('imdb_id',imdbId)
+      .order('created_at',{ascending:true});
+    if(error)throw error;
+    return (data||[]).map(row=>({
+      id:row.id,userId:this.profileNames[row.user_id]||'',body:row.body,createdAt:row.created_at
+    }));
+  },
+  async addComment(imdbId,body){
+    this.ensure();
+    if(!this.userId)throw new Error('Сесія завершилася. Увійдіть знову.');
+    const {data,error}=await SB.from('comments')
+      .insert({user_id:this.userId,imdb_id:imdbId,body})
+      .select('id,user_id,body,created_at')
+      .single();
+    if(error)throw error;
+    return {id:data.id,userId:ME,body:data.body,createdAt:data.created_at};
   }
 };
 let BE=SupabaseBackend;
@@ -498,6 +542,8 @@ let BE=SupabaseBackend;
 let ALL={};      // {userId:{imdbId:{w,n,nt,r,ts}}} — позначки всіх
 let ME=null;     // id поточного акаунта
 let READONLY=false;
+let COMMENTS={}; // {imdbId:[{id,userId,body,createdAt}]}
+const COMMENTS_OPEN=new Set(),COMMENTS_LOADING=new Set(),COMMENT_ERRORS={};
 const myMarks=()=>(ME&&ALL[ME])||{};
 
 const S={q:'',sort:'rating',region:'',notIndia:false,thr:false,decades:new Set(),themes:new Set(),mine:''};
@@ -635,6 +681,34 @@ function whoRow(f){
   }).join('')+'</div>';
 }
 
+function commentTime(iso){
+  const d=new Date(iso);
+  if(Number.isNaN(d.getTime()))return '';
+  return new Intl.DateTimeFormat('uk-UA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(d);
+}
+function commentError(err){
+  const code=err&&err.code||'',message=err&&err.message||'';
+  if(code==='42P01'||code==='PGRST205'||/comments/i.test(message)&&/not find|does not exist|schema cache/i.test(message))
+    return 'Коментарі ще не підключені в Supabase. Запустіть оновлений supabase/schema.sql.';
+  return message||'Не вдалося завантажити коментарі.';
+}
+function commentsBlock(f){
+  if(!ME)return '';
+  const id=f.imdb_id,open=COMMENTS_OPEN.has(id),items=COMMENTS[id]||[];
+  let content='';
+  if(COMMENTS_LOADING.has(id))content='<div class="comment-loading">Завантажуємо…</div>';
+  else if(COMMENT_ERRORS[id])content=`<div class="comment-error">${esc(COMMENT_ERRORS[id])}</div>`;
+  else if(!items.length)content='<div class="comment-empty">Ще немає коментарів.</div>';
+  else content=`<div class="comment-list">${items.map(c=>{
+    const u=USER_BY_ID[c.userId],name=u?u.name:'користувач',style=u?ustyle(u):'';
+    return `<div class="comment"><div class="comment-head" style="${style}">${u?avatar(u):''}<span class="nm">${esc(name)}</span><span class="comment-time">${esc(commentTime(c.createdAt))}</span></div><div class="comment-body">${esc(c.body)}</div></div>`;
+  }).join('')}</div>`;
+  return `<div class="comments">
+    <button class="comment-toggle" data-comment-toggle="${id}" type="button" aria-expanded="${open}">Коментарі</button>
+    ${open?`<div class="comment-panel">${content}<form class="comment-form" data-comment-form="${id}"><textarea name="comment" maxlength="1000" required placeholder="Написати коментар…" aria-label="Новий коментар"></textarea><button class="btn" type="submit">Додати</button></form></div>`:''}
+  </div>`;
+}
+
 function row(f){
   const mk=m(f.imdb_id),loose=f.basis!=='реальна історія',dis=READONLY?' disabled':'';
   const ga=groupAvg(f.imdb_id);
@@ -668,7 +742,8 @@ function row(f){
         <span class="mylabel">моя оцінка</span>
         <span class="stars">${stars}</span>
       </div>
-      ${whoRow(f)}`:''}
+      ${whoRow(f)}
+      ${commentsBlock(f)}`:''}
     </div>
   </li>`;
 }
@@ -751,12 +826,38 @@ el('rand').addEventListener('click',()=>{
 });
 el('list').addEventListener('click',e=>{
   if(READONLY)return;
-  const w=e.target.closest('[data-w]'),n=e.target.closest('[data-n]'),nt=e.target.closest('[data-nt]'),st=e.target.closest('[data-star]');
-  if(w){const id=w.dataset.w;const cur=m(id);setMark(id,{w:cur.w?0:1,n:cur.w?0:cur.n});updateRow(id);}
+  const toggle=e.target.closest('[data-comment-toggle]'),w=e.target.closest('[data-w]'),n=e.target.closest('[data-n]'),nt=e.target.closest('[data-nt]'),st=e.target.closest('[data-star]');
+  if(toggle){toggleComments(toggle.dataset.commentToggle);}
+  else if(w){const id=w.dataset.w;const cur=m(id);setMark(id,{w:cur.w?0:1,n:cur.w?0:cur.n});updateRow(id);}
   else if(n){const id=n.dataset.n;const cur=m(id);setMark(id,{n:cur.n?0:1});updateRow(id);}
   else if(nt){const id=nt.dataset.nt;const cur=m(id);setMark(id,{nt:cur.nt?0:1});updateRow(id);}
   else if(st){const id=st.dataset.id,v=+st.dataset.star;const cur=m(id);setMark(id,{r:cur.r===v?0:v,w:1});updateRow(id);}
 });
+el('list').addEventListener('submit',async e=>{
+  const form=e.target.closest('[data-comment-form]');if(!form)return;
+  e.preventDefault();
+  const id=form.dataset.commentForm,field=form.elements.comment,body=field.value.trim(),button=form.querySelector('button[type="submit"]');
+  if(!body)return;
+  button.disabled=true;delete COMMENT_ERRORS[id];
+  try{
+    const added=await BE.addComment(id,body);
+    (COMMENTS[id]=COMMENTS[id]||[]).push(added);
+    updateRow(id);
+  }catch(err){
+    COMMENT_ERRORS[id]=commentError(err);updateRow(id);
+  }
+});
+async function toggleComments(id){
+  if(COMMENTS_OPEN.has(id)){COMMENTS_OPEN.delete(id);updateRow(id);return;}
+  COMMENTS_OPEN.add(id);COMMENTS_LOADING.add(id);delete COMMENT_ERRORS[id];updateRow(id);
+  try{COMMENTS[id]=await BE.loadComments(id);}
+  catch(err){COMMENT_ERRORS[id]=commentError(err);}
+  finally{COMMENTS_LOADING.delete(id);if(COMMENTS_OPEN.has(id))updateRow(id);}
+}
+function resetComments(){
+  COMMENTS={};COMMENTS_OPEN.clear();COMMENTS_LOADING.clear();
+  for(const id in COMMENT_ERRORS)delete COMMENT_ERRORS[id];
+}
 function updateRow(id){
   const node=el('f_'+id);if(!node)return;
   const f=DATA.find(x=>x.imdb_id===id);
@@ -841,7 +942,7 @@ async function login(e){
   try{
     const userId=await BE.signIn(email,password);
     const loaded=await BE.loadAll();
-    ME=userId;ALL=loaded;READONLY=false;
+    ME=userId;ALL=loaded;READONLY=false;resetComments();
     const moved=await migrateLocalMarks(ME);
     el('banner').classList.add('hide');
     renderUserbar();render();setStatus('');
@@ -859,7 +960,7 @@ async function logout(){
   const button=el('logout');button.disabled=true;
   try{await BE.signOut();}
   catch(err){button.disabled=false;showBanner('Не вдалося завершити сесію: '+(err.message||'помилка Supabase')+'.');return;}
-  ME=null;ALL={};READONLY=true;
+  ME=null;ALL={};READONLY=true;resetComments();
   renderUserbar();render();setStatus('');
 }
 
@@ -883,7 +984,7 @@ async function boot(){
   try{
     ME=await BE.currentUser();
     if(!ME||!USER_BY_ID[ME]){
-      ME=null;ALL={};READONLY=true;
+      ME=null;ALL={};READONLY=true;resetComments();
       renderUserbar();render();setStatus('');return;
     }
     ALL=await BE.loadAll();
@@ -892,7 +993,7 @@ async function boot(){
     renderUserbar();render();setStatus('');
     if(moved)showBanner(`Перенесено ${moved} ${plural(moved)} з цього браузера в Supabase для акаунта «${USER_BY_ID[ME].name}».`);
   }catch(err){
-    ME=null;ALL={};READONLY=true;renderUserbar();render();setStatus('error');
+    ME=null;ALL={};READONLY=true;resetComments();renderUserbar();render();setStatus('error');
     el('loginError').textContent=err.message||'Не вдалося підключитися до Supabase.';
   }
 }

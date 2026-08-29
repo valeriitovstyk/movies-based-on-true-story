@@ -9,6 +9,8 @@ Steps 1, 2 and 5 are done by hand in the Supabase web console.
    explicitly.
 
 2. **Schema.** SQL Editor → paste all of `schema.sql` → Run.
+   The file is idempotent: run it again after pulling updates to add newer
+   tables such as `comments` without deleting existing marks.
 
 3. **Accounts.** Authentication → Users → Add user, four times, using each
    person's real email and a private password, with *Auto Confirm User*
