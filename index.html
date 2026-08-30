@@ -221,7 +221,9 @@ footer li{margin-bottom:6px}
 .stat.grp .n{color:var(--accent)}
 
 .comments{margin-top:10px}
-.comment-toggle{display:inline-flex;align-items:center;gap:7px;background:none;border:0;padding:3px 0;cursor:pointer;color:var(--accent);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.comment-toggle{display:inline-flex;align-items:center;gap:7px;background:none;border:0;padding:3px 0;cursor:pointer;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.comment-toggle.has-comments{color:var(--accent);font-weight:600}
+.comment-count{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;padding:0 6px;border-radius:99px;background:var(--accent);color:#fff;font-size:10px;font-weight:600;letter-spacing:0;font-variant-numeric:tabular-nums}
 .comment-toggle::after{content:"+";font-size:16px;line-height:1}
 .comment-toggle[aria-expanded="true"]::after{content:"−"}
 .comment-panel{margin-top:7px;border-left:2px solid var(--line);padding:4px 0 2px 12px;max-width:70ch}
@@ -556,6 +558,21 @@ const SupabaseBackend={
       id:row.id,userId:this.profileNames[row.user_id]||'',body:row.body,createdAt:row.created_at
     }));
   },
+  async loadCommentCounts(){
+    this.ensure();
+    if(!this.userId)throw new Error('Сесія завершилася. Увійдіть знову.');
+    const counts={},pageSize=1000;
+    for(let from=0;;from+=pageSize){
+      const {data,error}=await SB.from('comments')
+        .select('imdb_id')
+        .order('id',{ascending:true})
+        .range(from,from+pageSize-1);
+      if(error)throw error;
+      for(const row of data||[])counts[row.imdb_id]=(counts[row.imdb_id]||0)+1;
+      if(!data||data.length<pageSize)break;
+    }
+    return counts;
+  },
   async addComment(imdbId,body){
     this.ensure();
     if(!this.userId)throw new Error('Сесія завершилася. Увійдіть знову.');
@@ -573,6 +590,7 @@ let ALL={};      // {userId:{imdbId:{w,n,nt,r,ts}}} — позначки всі�
 let ME=null;     // id поточного акаунта
 let READONLY=false;
 let COMMENTS={}; // {imdbId:[{id,userId,body,createdAt}]}
+let COMMENT_COUNTS={}; // {imdbId:number}
 const COMMENTS_OPEN=new Set(),COMMENTS_LOADING=new Set(),COMMENT_ERRORS={};
 const myMarks=()=>(ME&&ALL[ME])||{};
 
@@ -729,7 +747,7 @@ function commentError(err){
 }
 function commentsBlock(f){
   if(!ME)return '';
-  const id=f.imdb_id,open=COMMENTS_OPEN.has(id),items=COMMENTS[id]||[];
+  const id=f.imdb_id,open=COMMENTS_OPEN.has(id),items=COMMENTS[id]||[],count=COMMENT_COUNTS[id]||0;
   let content='';
   if(COMMENTS_LOADING.has(id))content='<div class="comment-loading">Завантажуємо…</div>';
   else if(COMMENT_ERRORS[id])content=`<div class="comment-error">${esc(COMMENT_ERRORS[id])}</div>`;
@@ -739,7 +757,7 @@ function commentsBlock(f){
     return `<div class="comment"><div class="comment-head" style="${style}">${u?avatar(u):''}<span class="nm">${esc(name)}</span><span class="comment-time">${esc(commentTime(c.createdAt))}</span></div><div class="comment-body">${esc(c.body)}</div></div>`;
   }).join('')}</div>`;
   return `<div class="comments">
-    <button class="comment-toggle" data-comment-toggle="${id}" type="button" aria-expanded="${open}">Коментарі</button>
+    <button class="comment-toggle${count?' has-comments':''}" data-comment-toggle="${id}" type="button" aria-expanded="${open}">Коментарі${count?` <span class="comment-count" aria-label="${count} ${count===1?'коментар':'коментарі'}">${count}</span>`:''}</button>
     ${open?`<div class="comment-panel">${content}<form class="comment-form" data-comment-form="${id}"><textarea name="comment" maxlength="1000" required placeholder="Написати коментар…" aria-label="Новий коментар"></textarea><button class="btn" type="submit">Додати</button></form></div>`:''}
   </div>`;
 }
@@ -873,6 +891,7 @@ el('list').addEventListener('submit',async e=>{
   try{
     const added=await BE.addComment(id,body);
     (COMMENTS[id]=COMMENTS[id]||[]).push(added);
+    COMMENT_COUNTS[id]=(COMMENT_COUNTS[id]||0)+1;
     updateRow(id);
   }catch(err){
     COMMENT_ERRORS[id]=commentError(err);updateRow(id);
@@ -881,12 +900,15 @@ el('list').addEventListener('submit',async e=>{
 async function toggleComments(id){
   if(COMMENTS_OPEN.has(id)){COMMENTS_OPEN.delete(id);updateRow(id);return;}
   COMMENTS_OPEN.add(id);COMMENTS_LOADING.add(id);delete COMMENT_ERRORS[id];updateRow(id);
-  try{COMMENTS[id]=await BE.loadComments(id);}
+  try{
+    COMMENTS[id]=await BE.loadComments(id);
+    COMMENT_COUNTS[id]=COMMENTS[id].length;
+  }
   catch(err){COMMENT_ERRORS[id]=commentError(err);}
   finally{COMMENTS_LOADING.delete(id);if(COMMENTS_OPEN.has(id))updateRow(id);}
 }
 function resetComments(){
-  COMMENTS={};COMMENTS_OPEN.clear();COMMENTS_LOADING.clear();
+  COMMENTS={};COMMENT_COUNTS={};COMMENTS_OPEN.clear();COMMENTS_LOADING.clear();
   for(const id in COMMENT_ERRORS)delete COMMENT_ERRORS[id];
 }
 function updateRow(id){
@@ -974,6 +996,7 @@ async function login(e){
     const userId=await BE.signIn(email,password);
     const loaded=await BE.loadAll();
     ME=userId;ALL=loaded;READONLY=false;resetComments();
+    try{COMMENT_COUNTS=await BE.loadCommentCounts();}catch(err){COMMENT_COUNTS={};}
     const moved=await migrateLocalMarks(ME);
     el('banner').classList.add('hide');
     renderUserbar();render();setStatus('');
@@ -1020,6 +1043,7 @@ async function boot(){
     }
     ALL=await BE.loadAll();
     READONLY=false;
+    try{COMMENT_COUNTS=await BE.loadCommentCounts();}catch(err){COMMENT_COUNTS={};}
     const moved=await migrateLocalMarks(ME);
     renderUserbar();render();setStatus('');
     if(moved)showBanner(`Перенесено ${moved} ${plural(moved)} з цього браузера в Supabase для акаунта «${USER_BY_ID[ME].name}».`);
