@@ -1,8 +1,8 @@
 # Movies: based on true story
 
-A static site: **501 feature films from 1990–2026 based on real events**, rated 7.4 or higher on IMDb with at least 5,000 votes. Thrillers and horror are kept behind a separate toggle; documentaries, series and TV movies are excluded.
+A static catalogue of feature films based on real events, rated 7.4 or higher on IMDb with at least 5,000 votes. Thrillers and horror are kept behind a separate toggle; documentaries, series and TV movies are excluded.
 
-One page and no build step. Film data is embedded in `index.html`; personal marks and ratings are stored in Supabase and sync after password login.
+The catalogue is kept separately in `data/films.json`; personal marks and ratings are stored in Supabase and sync after password login. A small dependency-free script validates the catalogue and prepares the browser and CSV copies.
 
 > The interface and film notes are in Ukrainian. Only the title and this README are in English.
 
@@ -10,9 +10,12 @@ One page and no build step. Film data is embedded in `index.html`; personal mark
 
 | File | What it is |
 |---|---|
-| `index.html` | the site itself: catalogue, filters, search, personal marks, export |
-| `data/films.json` | the same 501 films as JSON — for any use of your own |
-| `data/films.csv` | the same as a table (UTF-8 with BOM, opens in Excel and Numbers) |
+| `index.html` | the site interface: filters, search, personal marks, export |
+| `data/films.json` | the single source of truth for all films |
+| `data/films.js` | generated browser copy, including support for opening `index.html` directly |
+| `data/films.csv` | generated table (UTF-8 with BOM, opens in Excel and Numbers) |
+| `data/README.md` | short Ukrainian catalogue update guide and a film template |
+| `scripts/build-catalog.mjs` | validates `films.json` and generates the JS and CSV copies |
 | `supabase/schema.sql` | database schema, RLS policies and profile trigger — ready to run |
 | `supabase/README.md` | step-by-step Supabase setup |
 | `.github/workflows/deploy.yml` | automatic deploy to GitHub Pages on every push to `main` |
@@ -39,7 +42,7 @@ Both options give you an address like `https://USER.github.io/REPO/`. The first 
 
 ## Run locally
 
-Just open `index.html` in a browser — the data is baked into the page, no server needed.
+Just open `index.html` in a browser — `data/films.js` works without a local server.
 
 If you want it "like production":
 
@@ -79,7 +82,13 @@ Passwords are handled by Supabase Auth and are never stored in this repository o
 
 ## Update the catalogue
 
-The data is embedded in `index.html` as a `DATA` array (search for `const DATA = [` near the top of the `<script>` block). The same array sits in `data/films.json` under the `films` key. To change the data, edit both places or regenerate `index.html` from your own source.
+Edit only the `films` array in `data/films.json`, then run:
+
+```bash
+node scripts/build-catalog.mjs
+```
+
+The command validates every record and duplicate IMDb IDs, then regenerates `data/films.js` for the site and `data/films.csv` for spreadsheets. The deploy workflow runs the same validation in check mode, so an outdated generated copy cannot be published accidentally. See `data/README.md` for a Ukrainian walkthrough and a copy-ready record template.
 
 Record fields:
 
