@@ -1,6 +1,6 @@
 # Movies: based on true story
 
-A static site: **317 feature films from 2000–2026 based on real events**, rated 7.4 or higher on IMDb with at least 5,000 votes. Thrillers and horror are kept behind a separate toggle; documentaries, series and TV movies are excluded.
+A static site: **501 feature films from 1990–2026 based on real events**, rated 7.4 or higher on IMDb with at least 5,000 votes. Thrillers and horror are kept behind a separate toggle; documentaries, series and TV movies are excluded.
 
 One page and no build step. Film data is embedded in `index.html`; personal marks and ratings are stored in Supabase and sync after password login.
 
@@ -11,7 +11,7 @@ One page and no build step. Film data is embedded in `index.html`; personal mark
 | File | What it is |
 |---|---|
 | `index.html` | the site itself: catalogue, filters, search, personal marks, export |
-| `data/films.json` | the same 317 films as JSON — for any use of your own |
+| `data/films.json` | the same 501 films as JSON — for any use of your own |
 | `data/films.csv` | the same as a table (UTF-8 with BOM, opens in Excel and Numbers) |
 | `supabase/schema.sql` | database schema, RLS policies and profile trigger — ready to run |
 | `supabase/README.md` | step-by-step Supabase setup |
@@ -54,7 +54,7 @@ Four password-protected accounts share the catalogue: **ira**, **olena**, **alex
 
 Every account keeps its own "watched", "together", "no translation", and "watch with a child" flags plus a 1–5 rating for every film. The personal *подивитись з дитиною* filter turns the last flag into a private watchlist. Each card shows the whole group — who has seen it and how they rated it — plus the group average next to the IMDb score. Extra filters include *нема перекладу* (no translation) and *ніхто з нас* (nobody in the group has seen it) for picking something for a movie night, along with sorting by the group's rating.
 
-Signed-in users can also open a collapsed comments section on any film, read the group's comments, and add their own. Comments are fetched only when that section is opened and are hidden completely from signed-out visitors.
+Signed-in users can also open a collapsed comments section on any film, read the group's comments, and add their own. Comment counts appear on film cards after sign-in; comment bodies are fetched only when the section is opened. Comments are hidden completely from signed-out visitors.
 
 Marks from the previous localStorage version are migrated to the corresponding Supabase account once, with their original timestamps. Newer data wins if the local and remote versions conflict.
 
@@ -89,17 +89,17 @@ country_main, region, language, theme, who_what, basis, note,
 thriller_flag, decade, desc
 ```
 
-`basis` is either "real story" or "inspired by real events"; `note` is a caveat about historical accuracy, shown in red; `thriller_flag` hides the film behind the "+ thrillers" button.
+`basis` has three reliability levels: a documented real story, a free interpretation inspired by real events, or a real historical backdrop with fictional characters. The same level appears as a label on every film card and can be selected in the reliability filter. `note` is a caveat about historical accuracy, shown in red; `thriller_flag` hides the film behind the "+ thrillers" button.
 
 ## How the list was assembled
 
 Candidates were gathered by decade and by region: lists of biographical and historical films, per-year wiki lists of "films based on actual events", and a separate sweep of Asian cinema. The rating, vote count, year and title type of every film were verified against IMDb's rating API — not taken from search snippets, which are often stale.
 
-Data as of **23 August 2026**.
+Data as of **2 September 2026**.
 
-Excluded: documentaries, series, TV movies and recorded stage productions; fiction set against a real backdrop ("1917", "All Quiet on the Western Front", "Blood Diamond", "RRR"); films with fewer than 5,000 votes; anything released before 2000.
+Excluded: documentaries, series, TV movies and recorded stage productions; films with fewer than 5,000 votes; anything released before 1990. Films with a real historical backdrop but fictional characters remain in the catalogue under a separate reliability label and filter.
 
-India accounts for 81 of the 317 entries. That isn't sampling bias — Indian audiences rate systematically higher, so more Indian films clear the 7.4 threshold. The region filter sorts this out.
+India accounts for 107 of the 501 entries. That isn't sampling bias — Indian audiences rate systematically higher, so more Indian films clear the 7.4 threshold. The region filter sorts this out.
 
 ## License
 
