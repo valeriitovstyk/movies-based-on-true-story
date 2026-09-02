@@ -319,6 +319,7 @@ h1{max-width:15ch;margin-bottom:18px;font-family:"Bricolage Grotesque","Manrope"
 .criteria{gap:7px}
 .crit{padding:6px 11px;border-color:color-mix(in srgb,var(--line) 78%,transparent);border-radius:999px;background:color-mix(in srgb,var(--surface) 76%,transparent);backdrop-filter:blur(12px);font-size:10.5px;letter-spacing:.025em}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:32px;border:0;border-radius:0;background:transparent}
+.stats.solo{grid-template-columns:1fr}
 .stat{position:relative;overflow:hidden;min-height:100px;padding:18px;border:1px solid color-mix(in srgb,var(--line) 82%,transparent);border-radius:18px;background:color-mix(in srgb,var(--surface) 88%,transparent);box-shadow:0 10px 30px color-mix(in srgb,var(--ink) 6%,transparent);backdrop-filter:blur(16px) saturate(125%)}
 .stat::after{content:"";position:absolute;right:-22px;bottom:-34px;width:86px;height:86px;border-radius:50%;background:var(--accent-bg);filter:blur(2px)}
 .stat:last-child{border-right:1px solid color-mix(in srgb,var(--line) 82%,transparent)}
@@ -412,8 +413,10 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
   .top-actions{grid-column:1;grid-row:3;width:100%;justify-self:stretch}
   .brand-hero{margin-bottom:24px}
   h1{font-size:clamp(48px,15vw,68px)}
-  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .stat{min-height:92px;padding:15px}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .stat{min-height:92px;padding:14px 11px}
+  .stat .n{font-size:24px}
+  .stat .l{font-size:10.5px;line-height:1.35}
   .controls{padding:8px 0}
   .ctl-row{padding:7px;border-radius:15px}
   .filter-groups{padding:14px}
@@ -430,9 +433,9 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
   .t-uk{font-size:18px}
 }
 @media (max-width:420px){
-  .stats{grid-template-columns:1fr 1fr}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
   .stat{min-height:86px}
-  .stat .n{font-size:24px}
+  .stat .n{font-size:22px}
   li.film{grid-template-columns:1fr}
   .score{display:flex;align-items:baseline;justify-content:flex-start;gap:9px;width:max-content;padding:6px 10px}
   .score .v,.score .mine,.score .grp{margin:0}
@@ -1118,20 +1121,15 @@ function refreshCounts(){
 function renderStats(){
   const scope=baseScope();
   const seen=scope.filter(f=>m(f.imdb_id).w).length;
-  const rated=scope.map(f=>m(f.imdb_id).r).filter(Boolean);
-  const myAvg=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length).toFixed(1):'–';
   const anySeen=scope.filter(f=>groupSeen(f.imdb_id)>0).length;
-  const stats=[
-    [scope.length,'фільмів у вибірці',''],
-    [scope.length?(scope.reduce((s,f)=>s+f.rating,0)/scope.length).toFixed(2):'–','середній IMDb',''],
-    [scope.filter(f=>f.rating>=8).length,'з рейтингом 8.0+','']
-  ];
+  const stats=[[scope.length,'фільмів у вибірці','']];
   if(ME)stats.push(
-    [seen,'переглянуто вами','mine'],
-    [myAvg,'ваша середня оцінка','mine'],
-    [anySeen,'бачив хтось із нас','grp']
+    [anySeen,'бачив хтось із нас','grp'],
+    [seen,'переглянуто вами','mine']
   );
-  el('stats').innerHTML=stats.map(([n,l,c])=>`<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+  const statsEl=el('stats');
+  statsEl.classList.toggle('solo',stats.length===1);
+  statsEl.innerHTML=stats.map(([n,l,c])=>`<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
 }
 
 /* ---------- events ---------- */
