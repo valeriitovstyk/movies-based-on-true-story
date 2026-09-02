@@ -224,6 +224,10 @@ footer li{margin-bottom:6px}
 .wu.me{outline:1px solid var(--uc);outline-offset:1px}
 .wu .rt{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:600}
 .wu .tg{font-family:"IBM Plex Mono",monospace;font-size:10px;opacity:.8}
+.who-list{display:grid;gap:6px}
+.who-person{display:flex;align-items:center;gap:6px;min-width:0}
+.who-result{margin-left:auto;white-space:nowrap}
+.who-status{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink-3)}
 
 .score .grp{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);margin-top:4px}
 .stat.grp .n{color:var(--accent)}
@@ -336,6 +340,18 @@ li.film.seen{border-color:color-mix(in srgb,var(--good) 36%,var(--line));backgro
 .mk{padding:6px 11px;border-color:transparent;border-radius:10px;background:var(--surface-2);transition:transform .16s ease,border-color .16s ease,background .16s ease}
 .mk:hover{transform:translateY(-1px)}
 .wu{padding:3px 10px 3px 3px;background:var(--surface-2)}
+.film-content{min-width:0}
+.film-top{display:block}
+.film-top.has-group{display:grid;grid-template-columns:minmax(0,1fr) 248px;gap:24px;align-items:start}
+.film-copy{min-width:0}
+.who{display:block;margin:0;padding:13px;border:1px solid color-mix(in srgb,var(--line) 80%,transparent);border-radius:15px;background:var(--surface-2)}
+.who .lbl{display:block;margin:0 0 9px;padding:0;font-size:9.5px;letter-spacing:.14em;font-weight:600}
+.wu{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;width:100%;min-height:36px;border-color:transparent;border-radius:10px;padding:5px 8px 5px 5px;background:color-mix(in srgb,var(--surface) 58%,transparent);transition:border-color .16s ease,background .16s ease,transform .16s ease}
+.wu.on{border-color:color-mix(in srgb,var(--uc) 38%,var(--line));background:color-mix(in srgb,var(--uc) 8%,var(--surface))}
+.wu.me{outline:0;box-shadow:inset 3px 0 0 var(--uc)}
+.wu .nm{overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.wu .rt{color:var(--uc);font-size:11px}
+.wu .tg{padding:2px 5px;border-radius:999px;background:color-mix(in srgb,var(--uc) 12%,transparent);color:var(--uc)}
 .comment-panel{margin-top:10px;padding:8px 0 4px 14px;animation:panel-in .22s ease-out}
 .comment{padding:11px 13px;border-radius:12px;background:var(--surface-2)}
 .comment-form textarea{border-color:transparent;border-radius:12px;background:var(--surface-2);transition:border-color .2s ease,box-shadow .2s ease}
@@ -352,6 +368,10 @@ footer{padding-top:8px;border-top:0}
 footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,transparent);border-radius:18px;background:color-mix(in srgb,var(--surface) 86%,transparent);animation:panel-in .24s ease-out}
 @keyframes panel-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 @media (hover:hover){li.film:hover{z-index:1;border-color:color-mix(in srgb,var(--accent) 32%,var(--line));box-shadow:0 18px 46px color-mix(in srgb,var(--ink) 10%,transparent);transform:translateY(-2px)}}
+@media (max-width:920px){
+  .film-top.has-group{grid-template-columns:1fr;gap:14px}
+  .who{max-width:340px}
+}
 @media (max-width:760px){
   header.top{padding:38px 0 26px}
   .topline{margin-bottom:28px}
@@ -881,13 +901,13 @@ function current(){
 }
 
 function whoRow(f){
-  return '<div class="who"><span class="lbl">у групі</span>'+USERS.map(u=>{
+  return '<aside class="who" aria-label="Хто дивився та оцінки групи"><span class="lbl">Перегляди й оцінки групи</span><div class="who-list">'+USERS.map(u=>{
     const k=marksOf(u.id,f.imdb_id), on=!!(k.w||k.r);
     const title=esc(u.name)+' — '+(k.w?'переглянуто':'ще ні')+(k.r?', оцінка '+k.r+'/5':'')+(k.n?', разом':'');
     return `<span class="wu${on?' on':''}${u.id===ME?' me':''}" style="${ustyle(u)}" title="${title}">`
-      +avatar(u)+`<span class="nm">${esc(u.name)}</span>`
-      +(k.r?`<span class="rt">${k.r}</span>`:'')+(k.n?'<span class="tg">разом</span>':'')+'</span>';
-  }).join('')+'</div>';
+      +avatar(u)+`<span class="who-person"><span class="nm">${esc(u.name)}</span>${k.n?'<span class="tg">разом</span>':''}</span>`
+      +`<span class="who-result">${k.r?`<span class="rt">★ ${k.r}/5</span>`:`<span class="who-status">${k.w?'переглянуто':'ще ні'}</span>`}</span></span>`;
+  }).join('')+'</div></aside>';
 }
 
 function commentTime(iso){
@@ -954,20 +974,25 @@ function row(f){
       ${mk.r?`<div class="mine">моя ${mk.r}/5</div>`:''}
       ${ga?`<div class="grp">гурт ${ga.toFixed(1)}</div>`:''}
     </div>
-    <div>
-      <div class="title-line">
-        <span class="t-uk"><a href="https://www.imdb.com/title/${f.imdb_id}/" target="_blank" rel="noopener">${esc(f.title_uk)}</a></span>
-        ${norm(f.title)!==norm(f.title_uk)?`<span class="t-orig">${esc(f.title)}</span>`:''}
-        <span class="t-year">${f.year}</span>
+    <div class="film-content">
+      <div class="film-top${ME?' has-group':''}">
+        <div class="film-copy">
+          <div class="title-line">
+            <span class="t-uk"><a href="https://www.imdb.com/title/${f.imdb_id}/" target="_blank" rel="noopener">${esc(f.title_uk)}</a></span>
+            ${norm(f.title)!==norm(f.title_uk)?`<span class="t-orig">${esc(f.title)}</span>`:''}
+            <span class="t-year">${f.year}</span>
+          </div>
+          <p class="desc">${esc(f.desc)}</p>
+          <div class="meta">
+            <span class="tag theme">${esc(f.theme)}</span>
+            <span class="tag">${esc(f.country)}</span>
+            ${bTag}
+            ${f.thriller_flag?'<span class="tag thr">тег: трилер</span>':''}
+          </div>
+          ${f.note?`<div class="note">${esc(f.note)}</div>`:''}
+        </div>
+        ${ME?whoRow(f):''}
       </div>
-      <p class="desc">${esc(f.desc)}</p>
-      <div class="meta">
-        <span class="tag theme">${esc(f.theme)}</span>
-        <span class="tag">${esc(f.country)}</span>
-        ${bTag}
-        ${f.thriller_flag?'<span class="tag thr">тег: трилер</span>':''}
-      </div>
-      ${f.note?`<div class="note">${esc(f.note)}</div>`:''}
       ${ME?`<div class="marks">
         <button class="mk${mk.w?' on':''}" data-w="${f.imdb_id}" type="button"${dis}><span class="bx"></span>переглянуто</button>
         <button class="mk${mk.n?' on':''}" data-n="${f.imdb_id}" type="button"${dis}><span class="bx"></span>разом</button>
@@ -976,7 +1001,6 @@ function row(f){
         <span class="mylabel">моя оцінка</span>
         <span class="stars">${stars}</span>
       </div>
-      ${whoRow(f)}
       ${commentsBlock(f)}`:''}
     </div>
   </li>`;
