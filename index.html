@@ -302,8 +302,8 @@ body{
 .wrap{max-width:1180px;padding-inline:clamp(16px,3vw,32px)}
 header.top{position:relative;isolation:isolate;overflow:hidden;padding:72px 0 38px;border-bottom:0}
 header.top::after{content:"";position:absolute;inset:auto 0 0;height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);z-index:-1}
-.topline{display:grid;grid-template-columns:auto minmax(170px,240px) minmax(260px,1fr);align-items:center;gap:clamp(14px,2vw,26px);margin-bottom:clamp(30px,5vw,48px)}
-.top-left{display:flex;align-items:center;gap:16px;min-width:0}
+.topline{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,240px) minmax(0,1fr);align-items:center;gap:clamp(14px,2vw,26px);margin-bottom:clamp(30px,5vw,48px)}
+.top-left{display:flex;align-items:center;gap:16px;min-width:0;justify-self:start}
 .eyebrow{padding:0;font-size:11px;letter-spacing:.18em;font-weight:600}
 .skin-picker{padding:5px 5px 5px 11px;border:1px solid color-mix(in srgb,var(--line) 78%,transparent);border-radius:999px;background:color-mix(in srgb,var(--surface) 78%,transparent);backdrop-filter:blur(14px) saturate(140%)}
 .skin-picker select{min-width:108px;padding:6px 26px 6px 9px;border:0;border-radius:999px;background:var(--surface-2)}
