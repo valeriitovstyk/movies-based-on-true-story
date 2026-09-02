@@ -70,10 +70,10 @@ See `supabase/README.md` for the setup. The publishable key is intentionally pre
 
 ## Moving marks between devices
 
-Marks now sync automatically. Export/import remains available for backup or manual recovery:
+Marks now sync automatically. Export/import remains available under **Details → Backup and import** for backup or manual recovery:
 
-1. **Export** → **Copy JSON** on the first device
-2. **Export** → paste the text into the field → **Import** on the second
+1. Open **Details → Backup and import** and choose **Copy JSON** on the first device
+2. Open the same section on the second device, paste the text into the field, and choose **Import**
 
 Export covers the account you're currently signed in as, and the file records which one, so an import lands where you expect.
 

@@ -187,6 +187,7 @@ footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr
 footer p{margin:0 0 10px;max-width:62ch}
 footer ul{margin:0;padding-left:18px}
 footer li{margin-bottom:6px}
+.backup-btn{margin-top:12px}
 
 /* ---------- users ---------- */
 :root{
@@ -494,7 +495,6 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
       <select id="region" aria-label="Регіон"><option value="">Усі регіони</option></select>
       <button class="btn" id="thr" type="button">+ трилери</button>
       <button class="btn" id="rand" type="button">Випадковий</button>
-      <button class="btn" id="exp" type="button">Експорт</button>
     </div>
     <details class="filter-panel">
       <summary class="filter-toggle">Фільтри</summary>
@@ -529,7 +529,7 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
 </main>
 
 <dialog id="expdlg"><div class="dlg">
-  <h3>Експорт позначок</h3>
+  <h3>Резервна копія та імпорт</h3>
   <p id="expinfo"></p>
   <div class="row">
     <button class="btn" id="cpJson" type="button">Копіювати JSON</button>
@@ -572,6 +572,7 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
           <li><span class="tag thr">тег: трилер</span> — показуються кнопкою «+ трилери».</li>
           <li>Червона примітка — застереження про історичну достовірність.</li>
         </ul>
+        <button class="btn backup-btn" id="exp" type="button" hidden>Резервна копія та імпорт</button>
       </div>
       </div>
     </details>
@@ -1255,6 +1256,7 @@ el('cpCsv').addEventListener('click',e=>copyOut(e.currentTarget,'Копіюва�
 /* ---------- account ---------- */
 function renderUserbar(){
   const u=USER_BY_ID[ME];
+  el('exp').hidden=!u;
   if(!u){
     el('userbar').innerHTML=`<form class="login-inline" id="loginInline">
       <input id="loginEmail" type="email" autocomplete="username" aria-label="Електронна пошта" placeholder="Email" required>
