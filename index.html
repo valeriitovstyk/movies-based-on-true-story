@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Каталог ігрових фільмів за реальними подіями з пошуком і фільтрами.">
 <title>Movies: based on true story</title>
+<link rel="icon" type="image/png" href="./assets/favicon.png">
+<link rel="apple-touch-icon" href="./assets/favicon.png">
 <script src="./data/skins.js"></script>
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}img,svg{max-width:100%}</style>
 </head>
@@ -300,15 +302,17 @@ body{
 .wrap{max-width:1180px;padding-inline:clamp(16px,3vw,32px)}
 header.top{position:relative;isolation:isolate;overflow:hidden;padding:72px 0 38px;border-bottom:0}
 header.top::after{content:"";position:absolute;inset:auto 0 0;height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);z-index:-1}
-.topline{align-items:center;margin-bottom:clamp(26px,5vw,48px)}
+.topline{display:grid;grid-template-columns:auto minmax(170px,240px) minmax(260px,1fr);align-items:center;gap:clamp(14px,2vw,26px);margin-bottom:clamp(30px,5vw,48px)}
+.top-left{display:flex;align-items:center;gap:16px;min-width:0}
 .eyebrow{padding:0;font-size:11px;letter-spacing:.18em;font-weight:600}
 .skin-picker{padding:5px 5px 5px 11px;border:1px solid color-mix(in srgb,var(--line) 78%,transparent);border-radius:999px;background:color-mix(in srgb,var(--surface) 78%,transparent);backdrop-filter:blur(14px) saturate(140%)}
 .skin-picker select{min-width:108px;padding:6px 26px 6px 9px;border:0;border-radius:999px;background:var(--surface-2)}
-.brand-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,440px);align-items:center;gap:clamp(28px,5vw,64px);margin-bottom:26px}
+.top-logo{display:block;width:min(100%,240px);height:auto;justify-self:center;opacity:.86;filter:drop-shadow(0 9px 16px color-mix(in srgb,var(--ink) 9%,transparent))}
+:root[data-skin-tone="dark"] .top-logo{filter:invert(1) drop-shadow(0 9px 16px rgba(0,0,0,.18))}
+.top-actions{min-width:0;justify-self:end}
+.brand-hero{display:block;margin-bottom:26px}
 .brand-copy{min-width:0}
 .brand-copy .lede{margin-bottom:0}
-.brand-logo{display:block;width:100%;height:auto;justify-self:end;opacity:.88;filter:drop-shadow(0 12px 20px color-mix(in srgb,var(--ink) 10%,transparent))}
-:root[data-skin-tone="dark"] .brand-logo{filter:invert(1) drop-shadow(0 12px 20px rgba(0,0,0,.18))}
 h1{max-width:15ch;margin-bottom:18px;font-family:"Bricolage Grotesque","Manrope",sans-serif;font-size:clamp(48px,7.8vw,84px);font-weight:700;line-height:.92;letter-spacing:-.055em}
 .lede{max-width:68ch;margin-bottom:26px;font-size:clamp(16px,1.8vw,19px);line-height:1.68}
 .lede b{font-weight:700}
@@ -392,14 +396,21 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
 @keyframes panel-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 @media (hover:hover){li.film:hover{z-index:1;border-color:color-mix(in srgb,var(--accent) 32%,var(--line));box-shadow:0 18px 46px color-mix(in srgb,var(--ink) 10%,transparent);transform:translateY(-2px)}}
 @media (max-width:920px){
+  .topline{grid-template-columns:minmax(0,1fr) auto}
+  .top-left{grid-column:1;grid-row:1}
+  .top-actions{grid-column:2;grid-row:1}
+  .top-logo{grid-column:1/-1;grid-row:2;width:min(100%,250px);margin-top:2px}
   .film-top.has-group{grid-template-columns:1fr;gap:14px}
   .who{max-width:340px}
 }
 @media (max-width:760px){
   header.top{padding:38px 0 26px}
-  .topline{margin-bottom:28px}
-  .brand-hero{grid-template-columns:1fr;gap:20px;margin-bottom:24px}
-  .brand-logo{width:min(100%,520px);justify-self:start}
+  .topline{grid-template-columns:1fr;align-items:start;gap:13px;margin-bottom:30px}
+  .top-left{grid-column:1;grid-row:1;flex-wrap:wrap}
+  .eyebrow{margin-bottom:0}
+  .top-logo{grid-column:1;grid-row:2;width:min(100%,230px);margin-top:2px}
+  .top-actions{grid-column:1;grid-row:3;width:100%;justify-self:stretch}
+  .brand-hero{margin-bottom:24px}
   h1{font-size:clamp(48px,15vw,68px)}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .stat{min-height:92px;padding:15px}
@@ -434,9 +445,12 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
 <header class="top">
   <div class="wrap">
     <div class="topline">
-      <div class="eyebrow">Каталог · <span id="catalogRange"></span></div>
-      <div class="top-actions">
+      <div class="top-left">
+        <div class="eyebrow">Каталог · <span id="catalogRange"></span></div>
         <label class="skin-picker" id="skinPicker"><span>Скін</span><select id="skinSelect" aria-label="Скін сайту"></select></label>
+      </div>
+      <img class="top-logo" src="./assets/group-logo.png" alt="Дитячий малюнок нашої кіногрупи" width="1200" height="450">
+      <div class="top-actions">
         <div class="userbar" id="userbar"></div>
       </div>
     </div>
@@ -445,7 +459,6 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
         <h1>Movies: based on true story</h1>
         <p class="lede"><b><span id="catalogTotal"></span> ігрових фільмів за реальними подіями</b> з рейтингом IMDb 7.4 і вище — від 1990 року до сьогодні. Кожен позначає переглянуте й ставить свої оцінки під власним акаунтом — у картці видно, хто що вже бачив. Кнопка «Ще не переглянуто» ховає ваше переглянуте, «Ніхто з нас» показує фільми, яких не бачив ніхто з групи.</p>
       </div>
-      <img class="brand-logo" src="./assets/group-logo.png" alt="Дитячий малюнок нашої кіногрупи" width="1200" height="450">
     </div>
     <div class="criteria">
       <span class="crit">IMDb ≥ 7.4</span>
