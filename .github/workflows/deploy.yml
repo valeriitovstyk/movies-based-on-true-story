@@ -25,8 +25,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify film catalogue
-        run: node scripts/build-catalog.mjs --check
+      - name: Verify static data
+        run: |
+          node --check data/skins.js
+          node scripts/build-catalog.mjs --check
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

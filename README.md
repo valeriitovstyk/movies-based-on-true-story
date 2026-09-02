@@ -15,6 +15,7 @@ The catalogue is kept separately in `data/films.json`; personal marks and rating
 | `data/films.js` | generated browser copy, including support for opening `index.html` directly |
 | `data/films.csv` | generated table (UTF-8 with BOM, opens in Excel and Numbers) |
 | `data/README.md` | short Ukrainian catalogue update guide and a film template |
+| `data/skins.js` | selectable site skins and their colour palettes |
 | `scripts/build-catalog.mjs` | validates `films.json` and generates the JS and CSV copies |
 | `supabase/schema.sql` | database schema, RLS policies and profile trigger — ready to run |
 | `supabase/README.md` | step-by-step Supabase setup |
@@ -89,6 +90,10 @@ node scripts/build-catalog.mjs
 ```
 
 The command validates every record and duplicate IMDb IDs, then regenerates `data/films.js` for the site and `data/films.csv` for spreadsheets. The deploy workflow runs the same validation in check mode, so an outdated generated copy cannot be published accidentally. See `data/README.md` for a Ukrainian walkthrough and a copy-ready record template.
+
+## Site skins
+
+The skin picker offers system, light, night, archive and cinema palettes. The selected skin is stored only in the visitor's browser. To add another palette, copy one entry in the `SKINS` array in `data/skins.js`, give it a unique `id` and label, and change its colour variables; no catalogue, Supabase or HTML changes are needed.
 
 Record fields:
 
