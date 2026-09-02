@@ -148,8 +148,9 @@ li.film.hit{animation:flash 1.6s ease-out}
 .star.on{opacity:1;color:var(--accent)}
 .star svg{width:18px;height:18px;display:block}
 .mylabel{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);margin-left:2px}
-.mark-section,.rating-section{display:grid;gap:6px;align-content:start}
-.mark-label{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.personal-panel{margin-top:14px}
+.mark-section,.rating-section{display:flex;align-items:center;gap:9px}
+.mark-label{font-size:11px;font-weight:700;color:var(--ink-3);white-space:nowrap}
 .mark-actions,.rating-control{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .view-switch{display:inline-flex;align-items:center;padding:3px;border-radius:12px;background:var(--surface-2)}
 .view-option{min-height:34px;padding:5px 10px;border:0;border-radius:9px;background:transparent;color:var(--ink-3);font-size:12px;cursor:pointer;white-space:nowrap}
@@ -347,8 +348,10 @@ li.film.seen{border-color:color-mix(in srgb,var(--good) 36%,var(--line));backgro
 .meta{gap:7px;margin-top:12px}
 .tag{padding:3px 8px;border-radius:999px;background:var(--surface-2);font-size:10.5px}
 .note{margin-top:11px;padding:8px 12px;border-radius:0 10px 10px 0}
-.marks{position:relative;display:grid;grid-template-columns:max-content minmax(230px,1fr) max-content;gap:18px;margin-top:16px;padding-top:16px;align-items:end}
-.mark-save{position:absolute;right:4px;top:0;padding:0 6px;background:var(--surface);transform:translateY(-52%)}
+.personal-panel{padding:11px 12px 9px;border:1px solid color-mix(in srgb,var(--line) 76%,transparent);border-radius:15px;background:color-mix(in srgb,var(--surface-2) 72%,transparent)}
+.marks{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:0;padding:0;border-top:0}
+.mark-section+.mark-section,.rating-section{padding-left:14px;border-left:1px solid var(--line)}
+.mark-save{position:static;min-width:78px;margin-left:auto;padding:0;background:transparent;transform:none;text-align:right}
 .view-option{transition:color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease}
 .view-option:hover{color:var(--ink);transform:translateY(-1px)}
 .mk{padding:6px 11px;border-color:transparent;border-radius:10px;background:var(--surface-2);transition:transform .16s ease,border-color .16s ease,background .16s ease}
@@ -366,6 +369,7 @@ li.film.seen{border-color:color-mix(in srgb,var(--good) 36%,var(--line));backgro
 .wu .nm{overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .wu .rt{color:var(--uc);font-size:11px}
 .wu .tg{padding:2px 5px;border-radius:999px;background:color-mix(in srgb,var(--uc) 12%,transparent);color:var(--uc)}
+.personal-panel>.comments{margin-top:9px;padding-top:8px;border-top:1px solid color-mix(in srgb,var(--line) 72%,transparent)}
 .comment-panel{margin-top:10px;padding:8px 0 4px 14px;animation:panel-in .22s ease-out}
 .comment{padding:11px 13px;border-radius:12px;background:var(--surface-2)}
 .comment-form textarea{border-color:transparent;border-radius:12px;background:var(--surface-2);transition:border-color .2s ease,box-shadow .2s ease}
@@ -385,8 +389,6 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
 @media (max-width:920px){
   .film-top.has-group{grid-template-columns:1fr;gap:14px}
   .who{max-width:340px}
-  .marks{grid-template-columns:max-content minmax(220px,1fr)}
-  .rating-section{grid-column:1/-1}
 }
 @media (max-width:760px){
   header.top{padding:38px 0 26px}
@@ -398,8 +400,12 @@ footer .cols{padding:20px;border:1px solid color-mix(in srgb,var(--line) 78%,tra
   .ctl-row{padding:7px;border-radius:15px}
   .filter-groups{padding:14px}
   .filter-group{grid-template-columns:1fr;gap:5px}
-  .marks{grid-template-columns:1fr;gap:14px;align-items:start}
-  .rating-section{grid-column:auto}
+  .personal-panel{padding:10px}
+  .marks{align-items:flex-start;gap:12px}
+  .mark-section,.rating-section{width:100%;align-items:flex-start;flex-direction:column;gap:6px}
+  .mark-section+.mark-section,.rating-section{padding:10px 0 0;border-top:1px solid var(--line);border-left:0}
+  .mark-save{position:absolute;right:0;top:0;width:auto}
+  .view-switch{max-width:100%;overflow-x:auto}
   li.film{grid-template-columns:58px 1fr;gap:13px;padding:16px;border-radius:16px}
   .score{padding:8px 5px;border-radius:12px}
   .score .r{font-size:20px}
@@ -1022,9 +1028,9 @@ function row(f){
         </div>
         ${ME?whoRow(f):''}
       </div>
-      ${ME?`<div class="marks">
+      ${ME?`<div class="personal-panel"><div class="marks">
         <div class="mark-section">
-          <span class="mark-label">Статус</span>
+          <span class="mark-label">Перегляд</span>
           <div class="view-switch" role="group" aria-label="Статус перегляду">
             <button class="view-option${!mk.w?' on neutral':''}" data-view-state="none" data-id="${f.imdb_id}" type="button" aria-pressed="${!mk.w}"${dis}>Не переглянуто</button>
             <button class="view-option${mk.w&&!mk.n?' on':''}" data-view-state="seen" data-id="${f.imdb_id}" type="button" aria-pressed="${!!(mk.w&&!mk.n)}"${dis}>Переглянуто</button>
@@ -1039,12 +1045,12 @@ function row(f){
           </div>
         </div>
         <div class="rating-section">
-          <span class="mark-label">Моя оцінка</span>
+          <span class="mark-label">Оцінка</span>
           <div class="rating-control"><span class="stars">${stars}</span><span class="rating-text">${mk.r?`${mk.r}/5`:'Не оцінено'}</span></div>
         </div>
         <span class="mark-save" data-mark-save="${f.imdb_id}" role="status" aria-live="polite"></span>
       </div>
-      ${commentsBlock(f)}`:''}
+      ${commentsBlock(f)}</div>`:''}
     </div>
   </li>`;
 }
