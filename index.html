@@ -237,6 +237,8 @@ footer li{margin-bottom:6px}
 .comment-head .nm{font-weight:600;color:var(--uc)}
 .comment-time{font-family:"IBM Plex Mono",monospace;font-size:10px;margin-left:auto}
 .comment-body{font-size:13.5px;color:var(--ink-2);white-space:pre-wrap;overflow-wrap:anywhere}
+.comment-body a{color:var(--accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}
+.comment-body a:hover{color:var(--warn)}
 .comment-empty,.comment-loading,.comment-error{font-size:13px;color:var(--ink-3);margin:2px 0 9px}
 .comment-error{color:var(--warn)}
 .comment-form{display:flex;align-items:flex-end;gap:7px}
@@ -766,6 +768,27 @@ function commentTime(iso){
   if(Number.isNaN(d.getTime()))return '';
   return new Intl.DateTimeFormat('uk-UA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(d);
 }
+function commentHtml(value){
+  const text=String(value||''),urlPattern=/(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+  let html='',last=0;
+  for(const match of text.matchAll(urlPattern)){
+    let url=match[0],tail='';
+    while(/[.,!?;:\]\}»]$/.test(url)){
+      tail=url.slice(-1)+tail;
+      url=url.slice(0,-1);
+    }
+    while(url.endsWith(')')){
+      const opens=(url.match(/\(/g)||[]).length,closes=(url.match(/\)/g)||[]).length;
+      if(closes<=opens)break;
+      tail=')'+tail;
+      url=url.slice(0,-1);
+    }
+    const href=url.toLowerCase().startsWith('www.')?'https://'+url:url;
+    html+=esc(text.slice(last,match.index))+`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(url)}</a>`+esc(tail);
+    last=match.index+match[0].length;
+  }
+  return html+esc(text.slice(last));
+}
 function commentError(err){
   const code=err&&err.code||'',message=err&&err.message||'';
   if(code==='42P01'||code==='PGRST205'||/comments/i.test(message)&&/not find|does not exist|schema cache/i.test(message))
@@ -781,7 +804,7 @@ function commentsBlock(f){
   else if(!items.length)content='<div class="comment-empty">Ще немає коментарів.</div>';
   else content=`<div class="comment-list">${items.map(c=>{
     const u=USER_BY_ID[c.userId],name=u?u.name:'користувач',style=u?ustyle(u):'';
-    return `<div class="comment"><div class="comment-head" style="${style}">${u?avatar(u):''}<span class="nm">${esc(name)}</span><span class="comment-time">${esc(commentTime(c.createdAt))}</span></div><div class="comment-body">${esc(c.body)}</div></div>`;
+    return `<div class="comment"><div class="comment-head" style="${style}">${u?avatar(u):''}<span class="nm">${esc(name)}</span><span class="comment-time">${esc(commentTime(c.createdAt))}</span></div><div class="comment-body">${commentHtml(c.body)}</div></div>`;
   }).join('')}</div>`;
   return `<div class="comments">
     <button class="comment-toggle${count?' has-comments':''}" data-comment-toggle="${id}" type="button" aria-expanded="${open}">Коментарі${count?` <span class="comment-count" aria-label="${count} ${count===1?'коментар':'коментарі'}">${count}</span>`:''}</button>
